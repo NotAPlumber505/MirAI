@@ -34,8 +34,7 @@ export default function App() {
         </Route>
 
         {/* Pages without navbar/footer (auth) */}
-        <Route path="/login" element={<Login supabaseClient={supabase}/>} />
-        <Route path="/signup" element={<Signup supabaseClient={supabase}/>} />
+        <Route path="/login" element={<Login />} />
       </Routes>
     </Router>
   );

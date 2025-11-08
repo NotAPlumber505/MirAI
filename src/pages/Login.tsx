@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom"
+import { createClient } from "@supabase/supabase-js"
 
-export default function Login(props: any) {
-    const supabase = props.supabase;
+export default function Login() {
+    const supabase = createClient(import.meta.env.VITE_SUPABASE_URL,import.meta.env.VITE_SUPABASE_KEY)
     const [userEmail,setUserEmail] = useState("");
     const [userPassword,setUserPassword] = useState("");
 
@@ -13,12 +14,17 @@ export default function Login(props: any) {
     })
 
     return (
-        <>
+        <div className="flex flex-col bg-black justify-center items-center">
         Placeholder login page
-        <input value={userEmail} onChange={handleEmailInput}></input>
-        <input value={userPassword} onChange={handlePasswordInput}></input>
-        <button onChange={submitLogin}>Login</button>
-        </>
+        <input className="w-32 bg-white border-4 border-white rounded-md" value={userEmail} onChange={handleEmailInput}></input>
+        <input className="w-32 bg-white border-4 border-white rounded-md" value={userPassword} onChange={handlePasswordInput}></input>
+
+        <div className="flex flex-row gap-5">
+            <button className="w-16 bg-white border-4 border-white rounded-md" onClick={submitLogin}>Login</button>
+            <button className="w-16 bg-white border-4 border-white rounded-md" onClick={submitRegister}> Register </button>
+        </div>
+        
+        </div>
     )
 
     function handleEmailInput(element: any) {
@@ -34,5 +40,23 @@ export default function Login(props: any) {
         });
         if(error)
             console.log("Supabase Error:" + error);
+    }
+    async function submitRegister() {
+        const { error } = await supabase.auth.signUp({
+            email: userEmail,
+            password: userPassword,
+        });
+        if(error)
+            console.log("Supabase Error: " + error);
+        else {
+            await insertIntoUserTable();
+            submitLogin();
+        }
+    }
+
+    async function insertIntoUserTable() {
+        const { error } = await supabase.from("users").insert("");
+        if (error)
+            console.log("Supabase Error: " + error);
     }
 }
