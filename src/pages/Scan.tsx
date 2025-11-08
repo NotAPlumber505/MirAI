@@ -211,7 +211,7 @@ export default function Scan(props:any) {
         return filePath;
     }
 
-    async function insertIntoUsersPlantsTable(filePath) {
+    async function insertIntoUsersPlantsTable(filePath:any) {
         const { error } = await supabase.from("usersplants").insert({plant_path : filePath});
         if (error)
             console.log("Supabase Error: " + error);
