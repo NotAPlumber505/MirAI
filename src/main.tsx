@@ -7,7 +7,7 @@ import "./index.css";
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <ThemeProvider>
-      <App />   {/* <-- render App instead of defining routes here */}
+      <App />
     </ThemeProvider>
   </React.StrictMode>
 );

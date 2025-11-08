@@ -53,6 +53,8 @@ PORT=5000
 ```bash
 cd frontend
 npm run dev
+
+npm run dev -- --host (to test your app on mobile)
 ```
 
 Open [http://localhost:5173](http://localhost:5173)

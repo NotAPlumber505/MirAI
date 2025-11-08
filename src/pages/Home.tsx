@@ -1,11 +1,10 @@
 import { useEffect, useRef } from "react";
-import Navbar from "../components/Navbar";
 import { useTheme } from "../contexts/ThemeContext";
+import ScanButton from "../components/ScanButton";
+import { Link } from "react-router-dom";
 
 export default function Home() {
   const { darkMode } = useTheme();
-
-  // Ref for the container that animates on scroll
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -21,11 +20,9 @@ export default function Home() {
     );
 
     if (scrollRef.current) observer.observe(scrollRef.current);
-
     return () => observer.disconnect();
   }, []);
 
-  // Colors for "How it works" section
   const stepsColor = darkMode ? "text-[var(--navbar)]" : "text-[#013220]";
 
   return (
@@ -34,24 +31,24 @@ export default function Home() {
         darkMode ? "bg-[var(--background-dark)]" : "bg-[var(--background)]"
       } text-[var(--primary)]`}
     >
-      <Navbar />
+      {/* ✅ Navbar comes from NavbarLayout automatically */}
 
       <main className="flex-1 pt-32 px-8 md:px-16">
         <div
           ref={scrollRef}
-          className="transition-all duration-700 opacity-0 translate-y-6"
+          className="transition-all duration-700 opacity-0 translate-y-6 flex flex-col items-center"
         >
-          {/* Main welcome heading */}
+          {/* Heading */}
           <h1 className="text-4xl text-center md:text-5xl font-bold mb-12 font-[var(--font-logo)]">
             🌿 Welcome to MirAI, your AI plant companion!
           </h1>
 
-          {/* Identify. Nurture. Grow */}
+          {/* Subheading */}
           <div className="text-4xl text-center md:text-5xl mb-20 font-[var(--font-logo)]">
             Identify. Nurture. Grow.
           </div>
 
-          {/* How it works section */}
+          {/* How it works */}
           <div className={`max-w-[900px] mx-auto flex flex-col space-y-6 ${stepsColor}`}>
             <h2 className="text-2xl text-left md:text-3xl font-bold mb-6">
               🌱 How it works
@@ -64,13 +61,38 @@ export default function Home() {
             </ol>
           </div>
 
-          {/* Optional tagline centered */}
+          {/* Tagline */}
           <p
             className={`mt-20 text-3xl text-center font-normal ${
               darkMode ? "text-[var(--navbar)]" : "text-[#013220]"
             }`}
           >
             🪴 Let’s make your world a little greener.
+          </p>
+
+          {/* Scan Button and Mobile "Meet the Team" button */}
+          <div className="mt-30 mb-100 flex flex-col items-center">
+          <ScanButton />
+
+          {/* Mobile-only "Meet the Team" button with hover states */}
+            <Link
+            to="/team"
+            className={`mt-20 px-6 py-3 rounded-full text-lg font-semibold transition-all duration-300
+                ${darkMode 
+                    ? "bg-[var(--primary)] text-[var(--background)] active:bg-[var(--primary-hover)] active:text-white active:scale-95" 
+                    : "bg-[var(--primary)] text-white active:bg-[var(--primary-hover)] active:text-[var(--background)] active:scale-95"
+                }
+                md:hidden`} // hide on desktop
+            >
+            Meet the Team
+            </Link>
+          </div>
+
+          {/* Mobile-only footer text with dark mode support */}
+          <p className={`block md:hidden mt-5 text-center text-sm transition-colors duration-300
+          ${darkMode ? "text-white" : "text-gray-500"}`}
+          >
+            © 2025 MirAI. All rights reserved.
           </p>
         </div>
       </main>
