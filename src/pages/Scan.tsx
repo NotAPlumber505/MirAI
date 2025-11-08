@@ -190,7 +190,7 @@ export default function Scan(props:any) {
             return;
         }
     }
-    async function uploadFileToBucket(file) {
+    async function uploadFileToBucket(file:any) {
         const userID = await getUserID();
         const filePath = `${userID}/flower1.png`
         console.log(userID);
