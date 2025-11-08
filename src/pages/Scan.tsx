@@ -12,13 +12,21 @@ export default function Scan(props) {
   const supabase = props.supabase;
     //Redirect if not logged in
     useEffect(() => {
-        if(!props.isLoggedIn)
-            navigate("/login")
+        if(!props.isLoggedIn){
+        const kickIfnotLogged = async () => {
+            const { data, error } = await supabase.auth.getSession();
+            if (!(data.session === null))
+                navigate("/login")
+        }
+        kickIfnotLogged;
+        //Implement solver if supabase is null
+        
+        }
     },[props.isLoggedIn]) 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-        uploadFile(file);
+        uploadFileToDatabase(file);
       setSelectedFile(file);
       setPreviewURL(URL.createObjectURL(file)); // preview the image
     }
@@ -162,15 +170,50 @@ export default function Scan(props) {
   );
 
   //Database functions
-  async function uploadFile(file) {
-    const { data, error } = await supabase
+    async function uploadFileToDatabase(file) {
+        const filePath = await uploadFileToBucket(file);
+        if(filePath === null){
+            console.log("Failed upload! Kicking user to homepage.")
+            navigate("/");
+            return;
+        }
+        await insertIntoUsersPlantsTable(filePath);
+        console.log("Done!");
+    }
+
+    async function getUserID() {
+        const { data: { user }} = await supabase.auth.getUser()
+        if (user) 
+            return user.id
+        else{
+            console.log("Failed to get user's ID!")
+            return;
+        }
+    }
+    async function uploadFileToBucket(file) {
+        const userID = await getUserID();
+        const filePath = `${userID}/flower1.png`
+        console.log(userID);
+        const { data, error } = await supabase
         .storage
         .from('plant_images')
-        .upload('flowers/flower1.png', file, {
+        .upload(filePath, file, {
             cacheControl: '3600',
             upsert: false
         })
-        if(error)
+        if(error) {
             console.log("Error uploading image! Error: " + error);
-  }
+            return null;
+        }
+        else {
+            console.log("Uploaded file!");
+        }
+        return filePath;
+    }
+
+    async function insertIntoUsersPlantsTable(filePath) {
+        const { error } = await supabase.from("usersplants").insert({plant_path : filePath});
+        if (error)
+            console.log("Supabase Error: " + error);
+    }
 }

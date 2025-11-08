@@ -5,8 +5,16 @@ export default function Profile(props) {
     const navigate = useNavigate();
     const supabase = props.supabase;
     useEffect(() => {
-            if(!props.isLoggedIn)
+        if(!props.isLoggedIn){
+        const kickIfnotLogged = async () => {
+            const { data, error } = await supabase.auth.getSession();
+            if (!(data.session === null))
                 navigate("/login")
+        }
+        kickIfnotLogged;
+
+        //Implement solver if supabase is null
+        }
         },[props.isLoggedIn])
     return (
         <div className="flex gap-10 pt-32 w-full justify-center items-center">

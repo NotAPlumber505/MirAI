@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTheme } from "../contexts/ThemeContext";
 import { Grid, Columns } from "lucide-react";
 import { motion } from "framer-motion";
@@ -14,9 +14,22 @@ interface Plant {
   imageUrl: string;
 }
 
-export default function MyPlants() {
+export default function MyPlants(props: any) {
   const { darkMode } = useTheme();
   const navigate = useNavigate();
+    const supabase = props.supabase;
+    useEffect(() => {
+        if(!props.isLoggedIn){
+        const kickIfnotLogged = async () => {
+            const { data, error } = await supabase.auth.getSession();
+            if (!(data.session === null))
+                navigate("/login")
+        }
+        kickIfnotLogged;
+        //Implement solver if supabase is null
+
+        }
+        },[props.isLoggedIn])
 
   // Mock plant data
   const [plants] = useState<Plant[]>([
