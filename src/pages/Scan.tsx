@@ -1,15 +1,20 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTheme } from "../contexts/ThemeContext";
 import { Upload } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export default function Scan(props) {
+    
   const { darkMode } = useTheme();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewURL, setPreviewURL] = useState<string | null>(null);
   const navigate = useNavigate();
-    const supabase = props.supabase;
-
+  const supabase = props.supabase;
+    //Redirect if not logged in
+    useEffect(() => {
+        if(!props.isLoggedIn)
+            navigate("/login")
+    },[props.isLoggedIn]) 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {

@@ -26,9 +26,9 @@ export default function App() {
         {/* Pages with navbar and footer */}
         <Route element={<NavbarLayout isLoggedIn={isLoggedIn} />}>
           <Route path="/" element={<Home />} />
-          <Route path="/scan" element={<Scan  supabase={supabase} />} />
-          <Route path="/my-plants" element={<MyPlants supabase={supabase} />} />
-          <Route path="/profile" element={<Profile supabase={supabase}/>} />
+          <Route path="/scan" element={<Scan  isLoggedIn={isLoggedIn} supabase={supabase} />} />
+          <Route path="/my-plants" element={<MyPlants isLoggedIn={isLoggedIn} supabase={supabase} />} />
+          <Route path="/profile" element={<Profile isLoggedIn={isLoggedIn} supabase={supabase}/>} />
           <Route path="/team" element={<Team />} />
         </Route>
 
@@ -41,8 +41,9 @@ export default function App() {
   //Database functions
   async function checkLogin() {
     const { data, error } = await supabase.auth.getSession();
-    if(error)
+    if(error) {
       console.log("Supabase Error:" + error);
+    }
     else 
       setIsLoggedIn(!(data.session === null));
   }
