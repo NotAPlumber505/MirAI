@@ -5,11 +5,15 @@ export default function Navbar() {
   const { darkMode, toggleDarkMode } = useTheme();
 
   const linkClasses =
-    "font-bold hover:text-[var(--secondary-hover)] transition cursor-pointer";
+    "font-bold px-4 py-2 rounded-[40px] transition-all duration-300 cursor-pointer";
+
+  // Hover colors
+  const lightHover = "hover:bg-[#81C784] hover:text-white hover:scale-105"; // prettier green for light mode
+  const darkHover = "hover:bg-[var(--primary)] hover:text-white hover:scale-105";
 
   const logoHover = darkMode
-    ? "hover:text-[var(--primary)]"
-    : "hover:text-yellow-400";
+    ? "hover:text-[var(--primary)] hover:scale-105"
+    : "hover:text-yellow-400 hover:scale-105";
 
   return (
     <nav
@@ -17,7 +21,6 @@ export default function Navbar() {
                   ${darkMode ? "bg-gradient-to-r from-white to-green-300" : "bg-gradient-to-r from-yellow-100 via-yellow-300 to-green-950"}
                   transition-colors duration-500`}
     >
-      {/* Clickable Logo */}
       <Link
         to="/"
         className={`text-2xl md:text-3xl font-bold ${darkMode ? "text-[var(--background)]" : "text-[var(--primary)]"} ${logoHover}`}
@@ -26,16 +29,28 @@ export default function Navbar() {
       </Link>
 
       <div className="flex flex-1 justify-center gap-8 md:gap-12 text-lg md:text-xl mx-16">
-        <Link className={`${linkClasses} ${darkMode ? "text-emerald-950" : "text-[var(--navbar)]"}`} to="/">
+        <Link
+          className={`${linkClasses} ${darkMode ? "text-emerald-950" : "text-[var(--navbar)]"} ${darkMode ? darkHover : lightHover}`}
+          to="/"
+        >
           Home
         </Link>
-        <Link className={`${linkClasses} ${darkMode ? "text-emerald-950" : "text-[var(--navbar)]"}`} to="/scan">
+        <Link
+          className={`${linkClasses} ${darkMode ? "text-emerald-950" : "text-[var(--navbar)]"} ${darkMode ? darkHover : lightHover}`}
+          to="/scan"
+        >
           Scan
         </Link>
-        <Link className={`${linkClasses} ${darkMode ? "text-emerald-950" : "text-[var(--navbar)]"}`} to="/my-plants">
+        <Link
+          className={`${linkClasses} ${darkMode ? "text-emerald-950" : "text-[var(--navbar)]"} ${darkMode ? darkHover : lightHover}`}
+          to="/my-plants"
+        >
           My Plants
         </Link>
-        <Link className={`${linkClasses} ${darkMode ? "text-emerald-950" : "text-[var(--navbar)]"}`} to="/profile">
+        <Link
+          className={`${linkClasses} ${darkMode ? "text-emerald-950" : "text-[var(--navbar)]"} ${darkMode ? darkHover : lightHover}`}
+          to="/profile"
+        >
           Profile
         </Link>
       </div>
