@@ -88,12 +88,16 @@ export default function Home() {
             </Link>
           </div>
 
-          {/* Mobile-only footer text with dark mode support */}
-          <p className={`block md:hidden mt-5 text-center text-sm transition-colors duration-300
-          ${darkMode ? "text-white" : "text-gray-500"}`}
-          >
-            © 2025 MirAI. All rights reserved.
-          </p>
+          {/* Mobile-only footer */}
+          <footer className="mt-16 mb-10 text-sm block md:hidden">
+            <p
+              className={`${
+                darkMode ? "text-white" : "text-[var(--navbar)]"
+              } transition-colors duration-300`}
+            >
+              © 2025 MirAI. All rights reserved.
+            </p>
+          </footer>
         </div>
       </main>
     </div>
