@@ -1,0 +1,42 @@
+@import 'tailwindcss';
+
+:root {
+  /* Fonts */
+  --font-sans: 'Poppins', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+  --font-logo: 'Quicksand', var(--font-sans);
+
+  /* Light Mode Colors */
+  --primary: #4CAF50;
+  --primary-hover: #3B893E;
+  --secondary: #FFD180;
+  --secondary-hover: #FFAB40;
+  --navbar: #34563A;
+  --danger: #E57373;
+  --background: #FFFFF0;
+  --success: #81C784;
+}
+
+.dark {
+  /* Dark Mode Colors */
+  --primary: #A5D6A7;
+  --primary-hover: #81C784;
+  --secondary: #FFF3E0;
+  --secondary-hover: #FFE0B2;
+  --navbar: #FFFFFF;
+  --danger: #FF8A80;
+  --background: #013220;
+  --success: #A5D6A7;
+}
+
+body {
+  @apply bg-[var(--background)] text-[var(--navbar)];
+  font-family: var(--font-sans);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-logo);
+}
+
+img {
+  width: 100%;
+}
