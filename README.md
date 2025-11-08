@@ -27,6 +27,8 @@ git clone https://github.com/NotAPlumber505/MirAI.git
 cd MirAI
 npm i
 npm i react-router-dom
+npm i framer-motion
+npm i lucide-react
 npm i tailwindcss @tailwindcss/vite
 
 ````
@@ -36,9 +38,9 @@ npm i tailwindcss @tailwindcss/vite
 Create a `.env.local` file in the project root:
 
 ```bash
-PLANT_ID_API_KEY=your_api_key_here
-SUPABASE_URL=https://xyzcompany.supabase.co
-SUPABASE_KEY=your_public_key_here
+VITE_PLANT_ID_API_KEY=your_api_key_here
+VITE_SUPABASE_URL=https://xyzcompany.supabase.co
+VITE_SUPABASE_KEY=your_public_key_here
 PORT=5000
 ```
 
