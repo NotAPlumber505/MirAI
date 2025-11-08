@@ -141,7 +141,7 @@ export default function Scan(props:any) {
 
           {/* View in My Plants Button */}
           <button
-          onClick={() => navigate("/my-plants")}
+          onClick={() => navigate("/my-garden")}
           className={`mt-4 mb-40 w-100 h-20 rounded-full text-xl font-medium shadow-md transition-all duration-300 cursor-pointer
             ${darkMode
             ? "bg-[var(--primary-hover)] text-[var(--background)] hover:bg-[var(--primary)]"

@@ -64,9 +64,9 @@ export default function MobileNavbar() {
           <span className="text-xs font-bold mt-1">Scan</span>
         </Link>
 
-        <Link to="/my-plants" className="flex flex-col items-center">
+        <Link to="/my-garden" className="flex flex-col items-center">
           <Leaf className={iconSize} />
-          <span className="text-xs font-bold mt-1">My Plants</span>
+          <span className="text-xs font-bold mt-1">My Garden</span>
         </Link>
 
         <Link to="/profile" className="flex flex-col items-center">
