@@ -6,7 +6,6 @@ import Profile from "./pages/Profile";
 import Scan from "./pages/Scan";
 import MyPlants from "./pages/MyPlants";
 import Login from "./pages/Login";
-import Signup from "./pages/Signup";
 import Team from "./pages/Team";
 import { createClient } from "@supabase/supabase-js"
 
