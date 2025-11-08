@@ -5,7 +5,7 @@ export default function Profile(props) {
     const navigate = useNavigate();
     const supabase = props.supabase;
     return (
-        <div className="flex pt-32 w-full justify-center items-center">
+        <div className="flex gap-10 pt-32 w-full justify-center items-center">
             <button className="w-32 bg-black border-4 border-white rounded-md" onClick={logout}>Logout</button>
         </div>
     )
