@@ -3,12 +3,12 @@ import Navbar from "../components/Navbar";
 import MobileNavbar from "../components/MobileNavbar";
 import Footer from "../components/Footer";
 
-export default function NavbarLayout() {
+export default function NavbarLayout(props:any) {
   return (
     <div className="flex flex-col min-h-screen">
       {/* Top Navbar for desktop */}
       <div className="hidden md:block">
-        <Navbar />
+        <Navbar loggedIn={props.isLoggedIn}/>
       </div>
 
       {/* Main content */}

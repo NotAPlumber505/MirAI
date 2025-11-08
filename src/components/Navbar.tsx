@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { useTheme } from "../contexts/ThemeContext";
 
-export default function Navbar() {
+export default function Navbar(props:any) {
   const { darkMode, toggleDarkMode } = useTheme();
 
   const linkClasses =
@@ -49,9 +49,9 @@ export default function Navbar() {
         </Link>
         <Link
           className={`${linkClasses} ${darkMode ? "text-emerald-950" : "text-[var(--navbar)]"} ${darkMode ? darkHover : lightHover}`}
-          to="/profile"
+          to={props.isLoggedIn?"/profile":"/login"}
         >
-          Profile
+          {props.isLoggedIn?<>Profile</>:<>Login</>}
         </Link>
       </div>
 
