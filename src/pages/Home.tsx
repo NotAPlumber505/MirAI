@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import Navbar from "../components/Navbar";
 import { useTheme } from "../contexts/ThemeContext";
+import ScanButton from "../components/ScanButton";
 
 export default function Home() {
   const { darkMode } = useTheme();
@@ -39,7 +40,7 @@ export default function Home() {
       <main className="flex-1 pt-32 px-8 md:px-16">
         <div
           ref={scrollRef}
-          className="transition-all duration-700 opacity-0 translate-y-6"
+          className="transition-all duration-700 opacity-0 translate-y-6 flex flex-col items-center"
         >
           {/* Main welcome heading */}
           <h1 className="text-4xl text-center md:text-5xl font-bold mb-12 font-[var(--font-logo)]">
@@ -72,6 +73,11 @@ export default function Home() {
           >
             🪴 Let’s make your world a little greener.
           </p>
+
+          {/* Scan Button - appears at the bottom */}
+          <div className="mt-30 mb-100">
+            <ScanButton />
+          </div>
         </div>
       </main>
     </div>
