@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 
-export default function Profile(props) {
+export default function Profile(props:any) {
     const navigate = useNavigate();
     const supabase = props.supabase;
     useEffect(() => {

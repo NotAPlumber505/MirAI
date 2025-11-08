@@ -4,7 +4,7 @@ import NavbarLayout from "./pages/NavbarLayout";
 import Home from "./pages/Home";
 import Profile from "./pages/Profile";
 import Scan from "./pages/Scan";
-import MyPlants from "./pages/MyPlants";
+import MyGarden from "./pages/MyGarden";
 import Login from "./pages/Login";
 import Team from "./pages/Team";
 import { createClient } from "@supabase/supabase-js"
@@ -27,7 +27,7 @@ export default function App() {
         <Route element={<NavbarLayout isLoggedIn={isLoggedIn} />}>
           <Route path="/" element={<Home />} />
           <Route path="/scan" element={<Scan  isLoggedIn={isLoggedIn} supabase={supabase} />} />
-          <Route path="/my-plants" element={<MyPlants isLoggedIn={isLoggedIn} supabase={supabase} />} />
+          <Route path="/my-garden" element={<MyGarden isLoggedIn={isLoggedIn} supabase={supabase} />} />
           <Route path="/profile" element={<Profile isLoggedIn={isLoggedIn} supabase={supabase}/>} />
           <Route path="/team" element={<Team />} />
         </Route>
