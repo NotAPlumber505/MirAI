@@ -32,7 +32,7 @@ export default function Login(props) {
     function handlePasswordInput(element: any) {
         setUserPassword(element.target.value);
     }
-    async function submitLogin() {
+    async function submitLogin() {``
         const { data, error } = await supabase.auth.signInWithPassword({
             email: userEmail,
             password: userPassword,
@@ -48,14 +48,17 @@ export default function Login(props) {
         if(error)
             console.log("Supabase Error: " + error);
         else {
-            await insertIntoUserTable();
-            submitLogin();
+            await submitLogin();
+            await insertIntoUserTable()
         }
     }
 
     async function insertIntoUserTable() {
-        const { error } = await supabase.from("users").insert("");
-        if (error)
+        const { error } = await supabase.from("users").insert({ email:  userEmail});
+        if (error){
             console.log("Supabase Error: " + error);
+            return null
+        }
     }
+
 }
