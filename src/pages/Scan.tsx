@@ -3,7 +3,7 @@ import { useTheme } from "../contexts/ThemeContext";
 import { Upload } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-export default function Scan(props) {
+export default function Scan(props:any) {
     
   const { darkMode } = useTheme();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -170,7 +170,7 @@ export default function Scan(props) {
   );
 
   //Database functions
-    async function uploadFileToDatabase(file) {
+    async function uploadFileToDatabase(file:any) {
         const filePath = await uploadFileToBucket(file);
         if(filePath === null){
             console.log("Failed upload! Kicking user to homepage.")
