@@ -3,7 +3,7 @@ import { useTheme } from "../contexts/ThemeContext";
 import { Upload } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-export default function Scan() {
+export default function Scan(props) {
   const { darkMode } = useTheme();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewURL, setPreviewURL] = useState<string | null>(null);

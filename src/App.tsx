@@ -26,14 +26,14 @@ export default function App() {
         {/* Pages with navbar and footer */}
         <Route element={<NavbarLayout isLoggedIn={isLoggedIn} />}>
           <Route path="/" element={<Home />} />
-          <Route path="/scan" element={<Scan />} />
-          <Route path="/my-plants" element={<MyPlants />} />
-          <Route path="/profile" element={<Profile />} />
+          <Route path="/scan" element={<Scan  supabase={supabase} />} />
+          <Route path="/my-plants" element={<MyPlants supabase={supabase} />} />
+          <Route path="/profile" element={<Profile supabase={supabase}/>} />
           <Route path="/team" element={<Team />} />
         </Route>
 
         {/* Pages without navbar/footer (auth) */}
-        <Route path="/login" element={<Login />} />
+        <Route path="/login" element={<Login supabase={supabase} />} />
       </Routes>
     </Router>
   );

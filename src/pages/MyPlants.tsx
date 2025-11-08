@@ -1,4 +1,4 @@
-export default function MyPlants() {
+export default function MyPlants(props) {
     return (
         <></>
     );

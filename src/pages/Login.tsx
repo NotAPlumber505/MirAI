@@ -1,9 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom"
-import { createClient } from "@supabase/supabase-js"
 
-export default function Login() {
-    const supabase = createClient(import.meta.env.VITE_SUPABASE_URL,import.meta.env.VITE_SUPABASE_KEY)
+export default function Login(props) {
+    const supabase = props.supabase;
     const [userEmail,setUserEmail] = useState("");
     const [userPassword,setUserPassword] = useState("");
 
