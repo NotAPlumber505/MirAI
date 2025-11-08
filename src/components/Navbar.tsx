@@ -14,7 +14,6 @@ export default function Navbar(props:any) {
   const logoHover = darkMode
     ? "hover:text-[var(--primary)] hover:scale-105"
     : "hover:text-yellow-400 hover:scale-105";
-
   return (
     <nav
       className={`w-full fixed top-0 z-50 px-8 py-4 flex items-center font-[var(--font-logo)] shadow-md

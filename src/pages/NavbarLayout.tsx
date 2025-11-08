@@ -8,7 +8,7 @@ export default function NavbarLayout(props:any) {
     <div className="flex flex-col min-h-screen">
       {/* Top Navbar for desktop */}
       <div className="hidden md:block">
-        <Navbar loggedIn={props.isLoggedIn}/>
+        <Navbar isLoggedIn={props.isLoggedIn}/>
       </div>
 
       {/* Main content */}
