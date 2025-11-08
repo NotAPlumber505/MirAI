@@ -13,7 +13,7 @@ export default function ScanButton() {
   };
 
   const baseClasses =
-    "w-[499px] h-28 rounded-[50px] flex items-center justify-center font-bold text-3xl font-['Poppins'] transition-all duration-300 cursor-pointer";
+    " w-[50dvw] h-28 rounded-[50px] flex items-center justify-center font-bold text-3xl font-['Poppins'] transition-all duration-300 cursor-pointer";
 
   const finalClasses = `${baseClasses} ${
     darkMode
