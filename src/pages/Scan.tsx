@@ -1,17 +1,24 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTheme } from "../contexts/ThemeContext";
 import { Upload } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-export default function Scan() {
+export default function Scan(props) {
+    
   const { darkMode } = useTheme();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewURL, setPreviewURL] = useState<string | null>(null);
   const navigate = useNavigate();
-
+  const supabase = props.supabase;
+    //Redirect if not logged in
+    useEffect(() => {
+        if(!props.isLoggedIn)
+            navigate("/login")
+    },[props.isLoggedIn]) 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+        uploadFile(file);
       setSelectedFile(file);
       setPreviewURL(URL.createObjectURL(file)); // preview the image
     }
@@ -153,4 +160,17 @@ export default function Scan() {
       )}
     </div>
   );
+
+  //Database functions
+  async function uploadFile(file) {
+    const { data, error } = await supabase
+        .storage
+        .from('plant_images')
+        .upload('flowers/flower1.png', file, {
+            cacheControl: '3600',
+            upsert: false
+        })
+        if(error)
+            console.log("Error uploading image! Error: " + error);
+  }
 }
