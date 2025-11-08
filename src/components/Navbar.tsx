@@ -36,19 +36,19 @@ export default function Navbar(props:any) {
         </Link>
         <Link
           className={`${linkClasses} ${darkMode ? "text-emerald-950" : "text-[var(--navbar)]"} ${darkMode ? darkHover : lightHover}`}
-          to="/scan"
+          to={props.isLoggedIn ? "/scan":"/login"}
         >
           Scan
         </Link>
         <Link
           className={`${linkClasses} ${darkMode ? "text-emerald-950" : "text-[var(--navbar)]"} ${darkMode ? darkHover : lightHover}`}
-          to="/my-plants"
+          to={props.isLoggedIn ? "/my-plants":"/login"}
         >
           My Plants
         </Link>
         <Link
           className={`${linkClasses} ${darkMode ? "text-emerald-950" : "text-[var(--navbar)]"} ${darkMode ? darkHover : lightHover}`}
-          to={props.isLoggedIn?"/profile":"/login"}
+          to={props.isLoggedIn ? "/profile":"/login"}
         >
           {props.isLoggedIn?<>Profile</>:<>Login</>}
         </Link>
