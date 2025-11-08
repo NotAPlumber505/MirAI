@@ -6,6 +6,5 @@ export default function NavbarLayout() {
             <Navbar />
             <Outlet />
         </div>
-        
-    )
+    );
 }
