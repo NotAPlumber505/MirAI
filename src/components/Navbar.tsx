@@ -42,7 +42,7 @@ export default function Navbar(props:any) {
         </Link>
         <Link
           className={`${linkClasses} ${darkMode ? "text-emerald-950" : "text-[var(--navbar)]"} ${darkMode ? darkHover : lightHover}`}
-          to={props.isLoggedIn ? "/my-plants":"/login"}
+          to={props.isLoggedIn ? "/my-garden":"/login"}
         >
           My Garden
         </Link>

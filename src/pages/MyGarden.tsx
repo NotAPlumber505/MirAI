@@ -14,7 +14,7 @@ interface Plant {
   imageUrl: string;
 }
 
-export default function MyPlants(props: any) {
+export default function MyGarden(props: any) {
   const { darkMode } = useTheme();
   const navigate = useNavigate();
     const supabase = props.supabase;
@@ -120,7 +120,7 @@ export default function MyPlants(props: any) {
                 ? "flex flex-col w-full rounded-[30px] bg-[var(--navbar)]" // fully rounded, grid
                 : "flex flex-col md:flex-row w-full max-w-5xl mx-auto rounded-3xl bg-[var(--navbar)]" // column
             }`}
-            onClick={() => navigate(`/my-plants/${plant.id}`)}
+            onClick={() => navigate(`/my-garden/${plant.id}`)}
             >
             {/* Image */}
             <div
