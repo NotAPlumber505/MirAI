@@ -105,4 +105,4 @@ Upload a plant photo → view name, species, confidence, health, and feedback �
 
 ---
 
-**Made with 💚 by the MirAI Team**
+##**Made with 💚 by the MirAI Team**
