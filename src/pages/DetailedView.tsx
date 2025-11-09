@@ -53,7 +53,9 @@ interface PlantDetails {
     genus?: string;
     confidence?: string;
     probability?: string;
-    description?: string;
+    description?: {
+      value: string;
+    };
   };
   imageUrl?: string; // This will be generated from plant_path
 }
@@ -151,7 +153,7 @@ export default function DetailedView() {
 
     async function fetchHealth(imageUrl: string) {
       try {
-        const response = await fetch("https://api.plant.id/v3/identify", {
+        const response = await fetch("https://api.plant.id/v3/health_assessment", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -216,7 +218,7 @@ export default function DetailedView() {
       {/* Plant Image */}
       <motion.img
         src={plant.imageUrl}
-        alt={plant.commonName}
+        alt={plant.plant_name}
         className="w-full max-w-xs md:max-w-sm mx-auto rounded-2xl object-cover shadow-lg mt-20 mb-6"
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -225,11 +227,11 @@ export default function DetailedView() {
 
       {/* Plant Name & Info */}
       <motion.div className="text-center mb-4" initial="hidden" animate="visible" variants={textVariant}>
-        <h1 className="text-3xl md:text-4xl font-bold mb-1">{plant.commonName}</h1>
-        <p className="italic text-base md:text-lg mb-1">{plant.scientificName}</p>
+        <h1 className="text-3xl md:text-4xl font-bold mb-1">{plant.plant_name}</h1>
+        <p className="italic text-base md:text-lg mb-1">{plant.scientific_name}</p>
         <p className="text-sm md:text-base">
-          Confidence: {plant.confidence} | Classification Rank: {plant.classificationRank} | Probability (Is a Plant?):{" "}
-          {plant.probability}
+          Probability (Is a Plant?):{" "}
+          {plant.plant_information?.probability}
         </p>
       </motion.div>
 
@@ -240,19 +242,19 @@ export default function DetailedView() {
         animate="visible"
         variants={textVariant}
       >
-        {plant.description}
+        {plant.plant_information?.description?.value}
       </motion.p>
 
       {/* Scientific Classification */}
       <motion.div className="max-w-4xl mx-auto mb-6" initial="hidden" animate="visible" variants={textVariant}>
         <h2 className="text-2xl md:text-3xl font-semibold mb-3 text-center md:text-left">🔬 Scientific Classification</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-left text-sm md:text-base">
-          {plant.kingdom && <p><strong>Kingdom:</strong> {plant.kingdom}</p>}
-          {plant.phylum && <p><strong>Phylum:</strong> {plant.phylum}</p>}
-          {plant.class && <p><strong>Class:</strong> {plant.class}</p>}
-          {plant.order && <p><strong>Order:</strong> {plant.order}</p>}
-          {plant.family && <p><strong>Family:</strong> {plant.family}</p>}
-          {plant.genus && <p><strong>Genus:</strong> {plant.genus}</p>}
+          {plant.plant_information?.kingdom && <p><strong>Kingdom:</strong> {plant.plant_information?.kingdom}</p>}
+          {plant.plant_information?.phylum && <p><strong>Phylum:</strong> {plant.plant_information?.phylum}</p>}
+          {plant.plant_information?.class && <p><strong>Class:</strong> {plant.plant_information?.class}</p>}
+          {plant.plant_information?.order && <p><strong>Order:</strong> {plant.plant_information?.order}</p>}
+          {plant.plant_information?.family && <p><strong>Family:</strong> {plant.plant_information?.family}</p>}
+          {plant.plant_information?.genus && <p><strong>Genus:</strong> {plant.plant_information?.genus}</p>}
         </div>
       </motion.div>
 

@@ -31,14 +31,12 @@ interface PlantIdResponse {
         };
       }>;
     };
-    health_assessment?: {
-      is_healthy: { binary: boolean; probability: number };
-      diseases: Array<{
-        name: string;
-        probability: number;
-        description?: string;
-      }>;
-    };
+    disease: {
+      question: string;
+      suggestions: [{
+      }]
+    }
+    is_healthy: { binary: boolean; probability: number };
   };
 };
 
@@ -157,6 +155,7 @@ export default function Scan(props: any) {
   const identification = await response.json();
 
   // Now the response should already include full taxonomy + other details
+  console.log(identification)
   return identification;
 };
 
@@ -303,19 +302,19 @@ export default function Scan(props: any) {
                 </p>
                 <p>
                   <span className="font-semibold text-[var(--primary)]">Overall Health:</span>{" "}
-                  {plantData.result.health_assessment?.is_healthy.binary ? "Healthy" : "Needs Attention"}
-                  {plantData.result.health_assessment?.is_healthy.probability && 
-                    ` (${(plantData.result.health_assessment.is_healthy.probability * 100).toFixed(1)}%)`}
+                  {plantData.result?.is_healthy.binary ? "Healthy" : "Needs Attention"}
+                  {plantData.result?.is_healthy.probability && 
+                    ` (${(plantData.result.is_healthy.probability * 100).toFixed(1)}%)`}
                 </p>
                 <p>
                   <span className="font-semibold text-[var(--primary)]">Scan Date:</span>{" "}
                   {new Date().toLocaleDateString()}
                 </p>
-                {plantData.result.health_assessment?.diseases.length ? (
+                {plantData.result?.disease.length ? (
                   <div className="mt-4">
                     <p className="font-semibold text-[var(--primary)]">Health Issues:</p>
                     <ul className="list-disc pl-5 mt-2">
-                      {plantData.result.health_assessment.diseases.map((disease, idx) => (
+                      {plantData.result.disease.map((disease : any, idx : any) => (
                         <li key={idx}>
                           {disease.name} ({(disease.probability * 100).toFixed(1)}%)
                           {disease.description && <p className="text-sm mt-1">{disease.description}</p>}
@@ -427,17 +426,17 @@ export default function Scan(props: any) {
 
     async function insertIntoUsersPlantsTable(filePath: string, plantData: PlantIdResponse) {
       // Get the best match from suggestions
+      console.log(plantData)
       const bestMatch = plantData.result.classification.suggestions[0];
-      const health = plantData.result.health_assessment;
-      console.log(bestMatch)
+      const health = plantData.result.disease;
       const plantInfo = {
         plant_path: filePath,
         plant_name: bestMatch.name,
         scientific_name: bestMatch.name,
         species: bestMatch.details.taxonomy.genus + " " + bestMatch.name.split(" ").slice(-1)[0],
-        overall_health: health?.is_healthy.binary ? "Healthy" : "Needs Attention",
+        overall_health: plantData.result.is_healthy.binary ? "Healthy" : "Needs Attention",
         last_scan_date: new Date().toISOString(),
-        health_assesment: health || null,
+        health_assesment: health,
         plant_information: {
           kingdom: bestMatch.details.taxonomy.kingdom,
           phylum: bestMatch.details.taxonomy.phylum,
