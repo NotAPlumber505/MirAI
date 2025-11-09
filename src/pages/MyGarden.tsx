@@ -19,49 +19,30 @@ export default function MyGarden(props: any) {
   const navigate = useNavigate();
   const location = useLocation();
   const supabase = props.supabase;
-    useEffect(() => {
-        if(!props.isLoggedIn){
-        const kickIfnotLogged = async () => {
-            const { data, error } = await supabase.auth.getSession();
-            if (!(data.session === null))
-                navigate("/login")
-        }
-        kickIfnotLogged;
-        //Implement solver if supabase is null
-        }
-        retreievePlants();
-      },[location.pathname])
 
-  // Mock plant data
-  const [plants, setPlants] = useState<Plant[]>([
-    {
-      id: 1,
-      name: "Plant One",
-      scientificName: "Plantae Unus",
-      species: "Species A",
-      overallHealth: "Good",
-      lastScan: "2025-11-08",
-      imageUrl: "https://placehold.co/150x150",
-    },
-    {
-      id: 2,
-      name: "Plant Two",
-      scientificName: "Plantae Duo",
-      species: "Species B",
-      overallHealth: "Average",
-      lastScan: "2025-11-07",
-      imageUrl: "https://placehold.co/150x150",
-    },
-    {
-      id: 3,
-      name: "Plant Three",
-      scientificName: "Plantae Tres",
-      species: "Species C",
-      overallHealth: "Excellent",
-      lastScan: "2025-11-06",
-      imageUrl: "https://placehold.co/150x150",
-    },
-  ]);
+  useEffect(() => {
+    // Ensure user is logged in and then fetch plants
+    const init = async () => {
+      try {
+        const { data } = await supabase.auth.getSession();
+        const session = data?.session;
+        if (!session) {
+          navigate('/login');
+          return;
+        }
+
+        await retrievePlants();
+      } catch (err) {
+        console.error('Error checking session or retrieving plants:', err);
+        setPlants([]);
+      }
+    };
+
+    init();
+  }, [location.pathname, props.isLoggedIn]);
+
+  // Plants list (start empty and populate from Supabase)
+  const [plants, setPlants] = useState<Plant[]>([]);
 
   const [layout, setLayout] = useState<"grid" | "column">("grid");
 
@@ -70,6 +51,14 @@ export default function MyGarden(props: any) {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.6 } },
   };
+
+  // Container class: when no plants, use a centered flex container so the empty-state is centered
+  const containerClass =
+    plants.length === 0
+      ? "w-full flex items-center justify-center text-center px-6 md:px-16 min-h-[60vh]"
+      : layout === "grid"
+      ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+      : "flex flex-col gap-6 w-full";
 
   return (
     <div
@@ -87,43 +76,55 @@ export default function MyGarden(props: any) {
         My Garden
       </motion.h1>
 
-      {/* Layout toggle (desktop only) */}
-      <div className="hidden md:flex justify-center gap-4 mb-6">
-        <button
-          onClick={() => setLayout("grid")}
-          className={`p-2 rounded-full shadow-md transition-all duration-300 cursor-pointer ${
-            layout === "grid"
-              ? "bg-[var(--primary)] text-white"
-              : darkMode
-              ? "bg-[var(--navbar)] text-[var(--background)]"
-              : "bg-white text-[var(--primary)]"
-          }`}
-        >
-          <Grid size={20} />
-        </button>
-        <button
-          onClick={() => setLayout("column")}
-          className={`p-2 rounded-full shadow-md transition-all duration-300 cursor-pointer ${
-            layout === "column"
-              ? "bg-[var(--primary)] text-white"
-              : darkMode
-              ? "bg-[var(--navbar)] text-[var(--background)]"
-              : "bg-white text-[var(--primary)]"
-          }`}
-        >
-          <Columns size={20} />
-        </button>
-      </div>
+      {/* Layout toggle (desktop only) - only show when there are plants */}
+      {plants.length > 0 && (
+        <div className="hidden md:flex justify-center gap-4 mb-6">
+          <button
+            onClick={() => setLayout("grid")}
+            className={`p-2 rounded-full shadow-md transition-all duration-300 cursor-pointer ${
+              layout === "grid"
+                ? "bg-[var(--primary)] text-white"
+                : darkMode
+                ? "bg-[var(--navbar)] text-[var(--background)]"
+                : "bg-white text-[var(--primary)]"
+            }`}
+          >
+            <Grid size={20} />
+          </button>
+          <button
+            onClick={() => setLayout("column")}
+            className={`p-2 rounded-full shadow-md transition-all duration-300 cursor-pointer ${
+              layout === "column"
+                ? "bg-[var(--primary)] text-white"
+                : darkMode
+                ? "bg-[var(--navbar)] text-[var(--background)]"
+                : "bg-white text-[var(--primary)]"
+            }`}
+          >
+            <Columns size={20} />
+          </button>
+        </div>
+      )}
 
       {/* Plants Grid */}
-      <div
-        className={`${
-          layout === "grid"
-            ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
-            : "flex flex-col gap-6 w-full"
-        }`}
-        >
-          <PlantDisplay layout={layout} plants={plants}/>
+      <div className={`${containerClass}`}>
+          {plants.length === 0 ? (
+            <div className="relative w-full flex flex-col justify-center items-center text-center px-6 md:px-16 flex-1 py-12">
+              <div className="flex flex-col justify-center items-center">
+                <h2 className={`text-4xl font-bold mb-4 ${darkMode ? 'text-[var(--primary)]' : 'text-[var(--primary)]'}`}>
+                  You don’t have any plants yet! 🌱
+                </h2>
+                <p className="text-lg mb-6">Scan a plant to start your garden and keep track of your plants' health.</p>
+                <button
+                  onClick={() => navigate('/scan')}
+                  className={`px-6 py-3 rounded-lg font-semibold cursor-pointer ${darkMode ? 'bg-[var(--primary)] hover:bg-green-700 text-white' : 'bg-[var(--primary)] hover:bg-green-600 text-white'}`}>
+                  Go to Scan Page
+                </button>
+              </div>
+            </div>
+          ) : (
+            <PlantDisplay layout={layout} plants={plants} />
+          )}
         </div>
 
       {/* Mobile-only footer */}
@@ -134,37 +135,54 @@ export default function MyGarden(props: any) {
       </footer>
     </div>
   );
-  async function retreievePlants() {
-    const { data, error } = await supabase
-    .from("usersplants")
-    .select('plant_path, plant_name, scientific_name, species, overall_health,last_scan_date,id ')
-    if(error){
-      console.log("Unfortunate. Plant not found: " + error)
-      return;
-    }
-    let plants: Plant[] = []
-    await Promise.all( data.map(async (plant :any) => {
+  async function retrievePlants() {
+    try {
       const { data, error } = await supabase
-    .storage
-    .from("plant_images")
-    .createSignedUrl(plant.plant_path,60)
-    if(error) {
-      console.log("Error retrieving image: " + error);
-    }
-      const plant_image = data.signedUrl;
-      const parsedPlant: Plant = {
-        id: plant.id,
-        name: plant.plant_name,
-        scientificName: plant.scientific_name,
-        species: plant.species,
-        overallHealth: plant.overall_health,
-        lastScan: plant.last_scan_date,
-        imageUrl: plant_image
+        .from("usersplants")
+        .select('plant_path, plant_name, scientific_name, species, overall_health,last_scan_date,id');
+
+      if (error || !data || data.length === 0) {
+        if (error) console.log("Error fetching plants:", error);
+        setPlants([]);
+        return;
       }
-      plants.push(parsedPlant)
-      return plants;
-    })
-  )
-  setPlants(plants)
+
+      const plantsList: Plant[] = await Promise.all(
+        data.map(async (plant: any) => {
+          let plant_image = "https://placehold.co/150x150";
+          try {
+            if (plant.plant_path) {
+              const { data: imageData, error: imageError } = await supabase
+                .storage
+                .from("plant_images")
+                .createSignedUrl(plant.plant_path, 60);
+
+              if (!imageError && imageData?.signedUrl) {
+                plant_image = imageData.signedUrl;
+              }
+            }
+          } catch (imgErr) {
+            console.log("Error retrieving image:", imgErr);
+          }
+
+          const parsedPlant: Plant = {
+            id: plant.id,
+            name: plant.plant_name,
+            scientificName: plant.scientific_name,
+            species: plant.species,
+            overallHealth: plant.overall_health,
+            lastScan: plant.last_scan_date,
+            imageUrl: plant_image,
+          };
+
+          return parsedPlant;
+        })
+      );
+
+      setPlants(plantsList);
+    } catch (err) {
+      console.error("Unexpected error retrieving plants:", err);
+      setPlants([]);
+    }
   }
 }

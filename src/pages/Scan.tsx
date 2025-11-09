@@ -106,58 +106,54 @@ export default function Scan(props: any) {
     });
   };
 
+  // Call the backend proxy (server) instead of calling Plant.id directly from the client.
+  // This keeps the Plant.id API key on the server and avoids exposing it in client bundles.
   const identifyPlant = async (base64Image: string): Promise<any> => {
-  const apiKey = import.meta.env.VITE_PLANT_ID_API_KEY;
-  if (!apiKey) throw new Error("Plant.ID API key not configured");
+    const detailsList = [
+      "common_names",
+      "url",
+      "description",
+      "taxonomy",
+      "rank",
+      "gbif_id",
+      "inaturalist_id",
+      "image",
+      "synonyms",
+      "edible_parts",
+      "watering",
+      "best_light_condition",
+      "best_soil_type",
+      "common_uses",
+      "cultural_significance",
+      "toxicity",
+      "best_watering"
+    ];
 
-  const detailsList = [
-    "common_names",
-    "url",
-    "description",
-    "taxonomy",
-    "rank",
-    "gbif_id",
-    "inaturalist_id",
-    "image",
-    "synonyms",
-    "edible_parts",
-    "watering",
-    "best_light_condition",
-    "best_soil_type",
-    "common_uses",
-    "cultural_significance",
-    "toxicity",
-    "best_watering"
-  ];
-
-  const language = "en";
-
-  const url = `https://api.plant.id/v3/identification?details=${detailsList.join(",")}&language=${language}`;
-
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Api-Key": apiKey,
-    },
-    body: JSON.stringify({
+    const body = {
       images: [base64Image],
       classification_level: "species",
       similar_images: true,
-      health: "all"
-    }),
-  });
+      health: "all",
+      details: detailsList.join(','),
+      language: 'en'
+    };
 
-  if (!response.ok) {
-    throw new Error(`Identification failed: ${response.status}`);
-  }
+    // Use the local proxy server. In development run the server on port 5000.
+    const resp = await fetch('/api/identify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
 
-  const identification = await response.json();
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      throw new Error(`Identification failed: ${resp.status} ${err?.error || ''}`);
+    }
 
-  // Now the response should already include full taxonomy + other details
-  console.log(identification)
-  return identification;
-};
+    const identification = await resp.json();
+    console.log('Identification (proxied):', identification);
+    return identification;
+  };
 
 
 
@@ -310,11 +306,11 @@ export default function Scan(props: any) {
                   <span className="font-semibold text-[var(--primary)]">Scan Date:</span>{" "}
                   {new Date().toLocaleDateString()}
                 </p>
-                {plantData.result?.disease.length ? (
+                {plantData.result?.disease?.suggestions?.length ? (
                   <div className="mt-4">
                     <p className="font-semibold text-[var(--primary)]">Health Issues:</p>
                     <ul className="list-disc pl-5 mt-2">
-                      {plantData.result.disease.map((disease : any, idx : any) => (
+                      {plantData.result.disease.suggestions.map((disease : any, idx : any) => (
                         <li key={idx}>
                           {disease.name} ({(disease.probability * 100).toFixed(1)}%)
                           {disease.description && <p className="text-sm mt-1">{disease.description}</p>}
@@ -428,36 +424,42 @@ export default function Scan(props: any) {
       // Get the best match from suggestions
       console.log(plantData)
       const bestMatch = plantData.result.classification.suggestions[0];
-      const health = plantData.result.disease;
-      const plantInfo = {
-        plant_path: filePath,
-        plant_name: bestMatch.name,
-        scientific_name: bestMatch.name,
-        species: bestMatch.details.taxonomy.genus + " " + bestMatch.name.split(" ").slice(-1)[0],
-        overall_health: plantData.result.is_healthy.binary ? "Healthy" : "Needs Attention",
-        last_scan_date: new Date().toISOString(),
-        health_assesment: health,
-        plant_information: {
-          kingdom: bestMatch.details.taxonomy.kingdom,
-          phylum: bestMatch.details.taxonomy.phylum,
-          class: bestMatch.details.taxonomy.class,
-          order: bestMatch.details.taxonomy.order,
-          family: bestMatch.details.taxonomy.family,
-          genus: bestMatch.details.taxonomy.genus,
-          confidence: (bestMatch.probability * 100).toFixed(1) + "%",
-          probability: (bestMatch.probability * 100).toFixed(1) + "%",
-          description: bestMatch.details.description || "No description available"
+        const health = plantData.result.disease;
+
+        // include user_id and format date to YYYY-MM-DD (matches your existing inserts)
+        const userId = await getUserID();
+        const lastScanDate = new Date().toISOString().split('T')[0];
+
+        const plantInfo = {
+          user_id: userId,
+          plant_path: filePath,
+          plant_name: bestMatch.name,
+          scientific_name: bestMatch.name,
+          species: bestMatch.details.taxonomy.genus + " " + bestMatch.name.split(" ").slice(-1)[0],
+          overall_health: plantData.result.is_healthy.binary ? "Healthy" : "Needs Attention",
+          last_scan_date: lastScanDate,
+          health_assesment: health,
+          plant_information: {
+            kingdom: bestMatch.details.taxonomy.kingdom,
+            phylum: bestMatch.details.taxonomy.phylum,
+            class: bestMatch.details.taxonomy.class,
+            order: bestMatch.details.taxonomy.order,
+            family: bestMatch.details.taxonomy.family,
+            genus: bestMatch.details.taxonomy.genus,
+            confidence: (bestMatch.probability * 100).toFixed(1) + "%",
+            probability: (bestMatch.probability * 100).toFixed(1) + "%",
+            description: bestMatch.details.description || "No description available"
+          }
+        };
+
+        const { error } = await supabase
+          .from("usersplants")
+          .insert(plantInfo);
+
+        if (error) {
+          console.error("Supabase Error:", error);
+          throw new Error("Failed to save plant data");
         }
-      };
-
-      const { error } = await supabase
-        .from("usersplants")
-        .insert(plantInfo);
-
-      if (error) {
-        console.error("Supabase Error:", error);
-        throw new Error("Failed to save plant data");
-      }
     }
     async function getLastPlantId() {
       const { data, error} = await supabase.rpc("plant_sequence_value")

@@ -19,21 +19,33 @@ export default function Profile({ supabase, isLoggedIn }: any) {
 
   useEffect(() => {
     const fetchAvatars = async () => {
-      if (!isLoggedIn) {
+      try {
+        // Always verify session server-side; if no session, redirect to login
         const { data } = await supabase.auth.getSession();
-        if (!data.session) navigate("/login");
-        else {
-          const user = data.session.user;
-          setUsername(user?.user_metadata?.username || user?.email || "User");
-
-          // TODO: Replace with real backend call to fetch avatars
-          const { data: avatarData, error } = await supabase
-            .from("avatars")
-            .select("*")
-            .eq("user_id", user.id);
-
-          if (!error && avatarData) setAvatars(avatarData);
+        const session = data?.session;
+        if (!session) {
+          navigate("/login");
+          return;
         }
+
+        const user = session.user;
+        setUsername(user?.user_metadata?.username || user?.email || "User");
+
+        // Fetch avatars for the logged-in user. Guard errors to avoid noisy fetch failures.
+        const { data: avatarData, error } = await supabase
+          .from("avatars")
+          .select("*")
+          .eq("user_id", user.id);
+
+        if (error) {
+          console.error("Error fetching avatars:", error);
+          setAvatars([]);
+        } else {
+          setAvatars(avatarData || []);
+        }
+      } catch (err) {
+        console.error("Unexpected error fetching avatars:", err);
+        setAvatars([]);
       }
     };
     fetchAvatars();
