@@ -5,20 +5,26 @@ import { useTheme } from "../contexts/ThemeContext";
 import { supabase } from "../supabaseClient";
 
 // --- Mock plant & health data for frontend testing ---
-const mockPlant = {
+const mockPlant: PlantDetails = {
   id: 1,
-  commonName: "Mock Plant",
-  scientificName: "Plantae Mockus",
-  confidence: "95%",
-  classificationRank: "Species",
-  probability: "98%",
-  description: "This is a mock plant description.",
-  kingdom: "Plantae",
-  phylum: "Tracheophyta",
-  class: "Magnoliopsida",
-  order: "Rosales",
-  family: "Rosaceae",
-  genus: "Plantae",
+  user_id: "00000000-0000-0000-0000-000000000000",
+  plant_path: "mock/plant.jpg",
+  plant_name: "Mock Plant",
+  scientific_name: "Plantae Mockus",
+  species: "Mock Species",
+  overall_health: "Good",
+  last_scan_date: "2025-11-09",
+  plant_information: {
+    kingdom: "Plantae",
+    phylum: "Tracheophyta",
+    class: "Magnoliopsida",
+    order: "Rosales",
+    family: "Rosaceae",
+    genus: "Plantae",
+    confidence: "95%",
+    probability: "98%",
+    description: "This is a mock plant description."
+  },
   imageUrl: "https://placehold.co/400x300",
 };
 
@@ -29,19 +35,29 @@ const mockHealth = {
 
 interface PlantDetails {
   id: number;
-  commonName: string;
-  scientificName: string;
-  confidence?: string;
-  classificationRank?: string;
-  probability?: string;
-  description: string;
-  kingdom?: string;
-  phylum?: string;
-  class?: string;
-  order?: string;
-  family?: string;
-  genus?: string;
-  imageUrl: string;
+  user_id: string;
+  plant_path: string;
+  plant_name: string;
+  avatar?: string;
+  scientific_name: string;
+  species: string;
+  overall_health: string;
+  last_scan_date: string;
+  health_assesment?: any;
+  plant_information?: {
+    kingdom?: string;
+    phylum?: string;
+    class?: string;
+    order?: string;
+    family?: string;
+    genus?: string;
+    confidence?: string;
+    probability?: string;
+    description?: {
+      value: string;
+    };
+  };
+  imageUrl?: string; // This will be generated from plant_path
 }
 
 interface SimilarImage {
@@ -92,7 +108,7 @@ export default function DetailedView() {
           setHealth(mockHealth);
         } else {
           const { data, error } = await supabase
-            .from("plants")
+            .from("usersplants")
             .select("*")
             .eq("id", plantId)
             .single();
@@ -101,11 +117,26 @@ export default function DetailedView() {
             console.error(error);
             setError("Failed to load plant.");
             setPlant(null);
-          } else {
+          } else if (data) {
+            // Get signed URL for the plant image
+            const { data: imageData, error: imageError } = await supabase
+              .storage
+              .from("plant_images")
+              .createSignedUrl(data.plant_path, 60);
+
+            if (imageError) {
+              console.error("Error getting image URL:", imageError);
+              data.imageUrl = "https://placehold.co/400x300"; // Fallback image
+            } else {
+              data.imageUrl = imageData.signedUrl;
+            }
+
             setPlant(data);
 
-            // Fetch health only if Plant.id key exists
-            if (data.imageUrl && import.meta.env.VITE_PLANT_ID_KEY) {
+            // Use stored health assessment if available, otherwise try Plant.id API
+            if (data.health_assesment) {
+              setHealth(data.health_assesment);
+            } else if (data.imageUrl && import.meta.env.VITE_PLANT_ID_KEY) {
               fetchHealth(data.imageUrl);
             } else {
               setHealth(mockHealth);
@@ -122,7 +153,7 @@ export default function DetailedView() {
 
     async function fetchHealth(imageUrl: string) {
       try {
-        const response = await fetch("https://api.plant.id/v3/identify", {
+        const response = await fetch("https://api.plant.id/v3/health_assessment", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -187,7 +218,7 @@ export default function DetailedView() {
       {/* Plant Image */}
       <motion.img
         src={plant.imageUrl}
-        alt={plant.commonName}
+        alt={plant.plant_name}
         className="w-full max-w-xs md:max-w-sm mx-auto rounded-2xl object-cover shadow-lg mt-20 mb-6"
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -196,11 +227,11 @@ export default function DetailedView() {
 
       {/* Plant Name & Info */}
       <motion.div className="text-center mb-4" initial="hidden" animate="visible" variants={textVariant}>
-        <h1 className="text-3xl md:text-4xl font-bold mb-1">{plant.commonName}</h1>
-        <p className="italic text-base md:text-lg mb-1">{plant.scientificName}</p>
+        <h1 className="text-3xl md:text-4xl font-bold mb-1">{plant.plant_name}</h1>
+        <p className="italic text-base md:text-lg mb-1">{plant.scientific_name}</p>
         <p className="text-sm md:text-base">
-          Confidence: {plant.confidence} | Classification Rank: {plant.classificationRank} | Probability (Is a Plant?):{" "}
-          {plant.probability}
+          Probability (Is a Plant?):{" "}
+          {plant.plant_information?.probability}
         </p>
       </motion.div>
 
@@ -211,19 +242,19 @@ export default function DetailedView() {
         animate="visible"
         variants={textVariant}
       >
-        {plant.description}
+        {plant.plant_information?.description?.value}
       </motion.p>
 
       {/* Scientific Classification */}
       <motion.div className="max-w-4xl mx-auto mb-6" initial="hidden" animate="visible" variants={textVariant}>
         <h2 className="text-2xl md:text-3xl font-semibold mb-3 text-center md:text-left">🔬 Scientific Classification</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-left text-sm md:text-base">
-          {plant.kingdom && <p><strong>Kingdom:</strong> {plant.kingdom}</p>}
-          {plant.phylum && <p><strong>Phylum:</strong> {plant.phylum}</p>}
-          {plant.class && <p><strong>Class:</strong> {plant.class}</p>}
-          {plant.order && <p><strong>Order:</strong> {plant.order}</p>}
-          {plant.family && <p><strong>Family:</strong> {plant.family}</p>}
-          {plant.genus && <p><strong>Genus:</strong> {plant.genus}</p>}
+          {plant.plant_information?.kingdom && <p><strong>Kingdom:</strong> {plant.plant_information?.kingdom}</p>}
+          {plant.plant_information?.phylum && <p><strong>Phylum:</strong> {plant.plant_information?.phylum}</p>}
+          {plant.plant_information?.class && <p><strong>Class:</strong> {plant.plant_information?.class}</p>}
+          {plant.plant_information?.order && <p><strong>Order:</strong> {plant.plant_information?.order}</p>}
+          {plant.plant_information?.family && <p><strong>Family:</strong> {plant.plant_information?.family}</p>}
+          {plant.plant_information?.genus && <p><strong>Genus:</strong> {plant.plant_information?.genus}</p>}
         </div>
       </motion.div>
 

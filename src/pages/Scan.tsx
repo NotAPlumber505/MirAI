@@ -4,10 +4,49 @@ import { Upload } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 
+interface PlantIdResponse {
+  result: {
+    classification: {
+      suggestions: Array<{
+        name: string;
+        probability: number;
+        similar_images: Array<{
+          id: string;
+          url: string;
+          license_name: string;
+          citation: string;
+        }>;
+        details: {
+          common_names?: string[];
+          taxonomy: {
+            class: string;
+            family: string;
+            genus: string;
+            kingdom: string;
+            order: string;
+            phylum: string;
+          };
+          description?: string;
+          url?: string;
+        };
+      }>;
+    };
+    disease: {
+      question: string;
+      suggestions: [{
+      }]
+    }
+    is_healthy: { binary: boolean; probability: number };
+  };
+};
+
 export default function Scan(props: any) {
   const { darkMode } = useTheme();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewURL, setPreviewURL] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [plantData, setPlantData] = useState<PlantIdResponse | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const supabase = props.supabase;
   const location = useLocation();
@@ -23,14 +62,104 @@ export default function Scan(props: any) {
     }
   }, [location.pathname]);
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      uploadFileToDatabase(file);
+      setIsLoading(true);
+      setError(null);
       setSelectedFile(file);
-      setPreviewURL(URL.createObjectURL(file)); // preview the image
+      setPreviewURL(URL.createObjectURL(file));
+
+      try {
+        // First identify the plant
+        const base64Image = await fileToBase64(file);
+        const identificationResult = await identifyPlant(base64Image);
+        setPlantData(identificationResult);
+        
+        // Then upload to storage and database
+        const filePath = await uploadFileToBucket(file);
+        if (filePath === null) {
+          throw new Error("Failed to upload file to storage");
+        }
+        
+        // Insert all data into the database
+        await insertIntoUsersPlantsTable(filePath, identificationResult);
+      } catch (err) {
+        console.error("Error processing plant:", err);
+        setError(err instanceof Error ? err.message : "An error occurred");
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
+
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        const base64String = reader.result as string;
+        // Remove the data URL prefix
+        resolve(base64String.replace(/^data:image\/\w+;base64,/, ""));
+      };
+      reader.onerror = () => reject(new Error("Failed to read file"));
+    });
+  };
+
+  const identifyPlant = async (base64Image: string): Promise<any> => {
+  const apiKey = import.meta.env.VITE_PLANT_ID_API_KEY;
+  if (!apiKey) throw new Error("Plant.ID API key not configured");
+
+  const detailsList = [
+    "common_names",
+    "url",
+    "description",
+    "taxonomy",
+    "rank",
+    "gbif_id",
+    "inaturalist_id",
+    "image",
+    "synonyms",
+    "edible_parts",
+    "watering",
+    "best_light_condition",
+    "best_soil_type",
+    "common_uses",
+    "cultural_significance",
+    "toxicity",
+    "best_watering"
+  ];
+
+  const language = "en";
+
+  const url = `https://api.plant.id/v3/identification?details=${detailsList.join(",")}&language=${language}`;
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Api-Key": apiKey,
+    },
+    body: JSON.stringify({
+      images: [base64Image],
+      classification_level: "species",
+      similar_images: true,
+      health: "all"
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Identification failed: ${response.status}`);
+  }
+
+  const identification = await response.json();
+
+  // Now the response should already include full taxonomy + other details
+  console.log(identification)
+  return identification;
+};
+
+
 
   const handleUploadClick = () => {
     document.getElementById("fileInput")?.click();
@@ -135,13 +264,67 @@ export default function Scan(props: any) {
             animate="visible"
             variants={textVariant}
           >
-            {["Name", "Species", "Common Names", "Family/Genus", "Overall Health", "Scan Date"].map(
-              (label) => (
-                <p key={label}>
-                  <span className="font-semibold text-[var(--primary)]">{label}:</span>{" "}
+            {isLoading ? (
+              <div className="text-center text-[var(--primary)]">
+                <p>Identifying plant...</p>
+                <div className="mt-4 h-2 bg-[var(--primary-hover)] rounded-full animate-pulse"></div>
+              </div>
+            ) : error ? (
+              <div className="text-center text-red-500">
+                <p>{error}</p>
+                <button
+                  onClick={handleReset}
+                  className="mt-4 px-4 py-2 bg-[var(--primary)] text-white rounded-lg hover:bg-[var(--primary-hover)]"
+                >
+                  Try Again
+                </button>
+              </div>
+            ) : plantData ? (
+              <>
+                <p>
+                  <span className="font-semibold text-[var(--primary)]">Name:</span>{" "}
+                  {plantData.result.classification.suggestions[0].name}
                 </p>
-              )
-            )}
+                <p>
+                  <span className="font-semibold text-[var(--primary)]">Species:</span>{" "}
+                  {plantData.result.classification.suggestions[0].details.taxonomy.genus +
+                    " " +
+                    plantData.result.classification.suggestions[0].name.split(" ").slice(-1)[0]}
+                </p>
+                <p>
+                  <span className="font-semibold text-[var(--primary)]">Common Names:</span>{" "}
+                  {plantData.result.classification.suggestions[0].details.common_names?.join(", ") || "N/A"}
+                </p>
+                <p>
+                  <span className="font-semibold text-[var(--primary)]">Family/Genus:</span>{" "}
+                  {plantData.result.classification.suggestions[0].details.taxonomy.family} /{" "}
+                  {plantData.result.classification.suggestions[0].details.taxonomy.genus}
+                </p>
+                <p>
+                  <span className="font-semibold text-[var(--primary)]">Overall Health:</span>{" "}
+                  {plantData.result?.is_healthy.binary ? "Healthy" : "Needs Attention"}
+                  {plantData.result?.is_healthy.probability && 
+                    ` (${(plantData.result.is_healthy.probability * 100).toFixed(1)}%)`}
+                </p>
+                <p>
+                  <span className="font-semibold text-[var(--primary)]">Scan Date:</span>{" "}
+                  {new Date().toLocaleDateString()}
+                </p>
+                {plantData.result?.disease.length ? (
+                  <div className="mt-4">
+                    <p className="font-semibold text-[var(--primary)]">Health Issues:</p>
+                    <ul className="list-disc pl-5 mt-2">
+                      {plantData.result.disease.map((disease : any, idx : any) => (
+                        <li key={idx}>
+                          {disease.name} ({(disease.probability * 100).toFixed(1)}%)
+                          {disease.description && <p className="text-sm mt-1">{disease.description}</p>}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+              </>
+            ) : null}
           </motion.div>
 
           {/* Upload Another Button */}
@@ -196,15 +379,18 @@ export default function Scan(props: any) {
   );
 
   //Database functions
-  async function uploadFileToDatabase(file: any) {
-    const filePath = await uploadFileToBucket(file);
-    if (filePath === null) {
-      console.log("Failed upload! Kicking user to homepage.");
-      navigate("/");
-      return;
+  async function uploadFileToDatabase(file: File, identificationResult: PlantIdResponse) {
+    try {
+      const filePath = await uploadFileToBucket(file);
+      if (filePath === null) {
+        throw new Error("Failed to upload file to storage");
+      }
+      await insertIntoUsersPlantsTable(filePath, identificationResult);
+      console.log("Successfully saved plant data!");
+    } catch (err) {
+      console.error("Error in uploadFileToDatabase:", err);
+      throw err;
     }
-    await insertIntoUsersPlantsTable(filePath);
-    console.log("Done!");
   }
 
     async function getUserID() {
@@ -238,10 +424,40 @@ export default function Scan(props: any) {
         return filePath;
     }
 
-    async function insertIntoUsersPlantsTable(filePath:any) {
-        const { error } = await supabase.from("usersplants").insert({plant_path: filePath});
-        if (error)
-            console.log("Supabase Error: " + error);
+    async function insertIntoUsersPlantsTable(filePath: string, plantData: PlantIdResponse) {
+      // Get the best match from suggestions
+      console.log(plantData)
+      const bestMatch = plantData.result.classification.suggestions[0];
+      const health = plantData.result.disease;
+      const plantInfo = {
+        plant_path: filePath,
+        plant_name: bestMatch.name,
+        scientific_name: bestMatch.name,
+        species: bestMatch.details.taxonomy.genus + " " + bestMatch.name.split(" ").slice(-1)[0],
+        overall_health: plantData.result.is_healthy.binary ? "Healthy" : "Needs Attention",
+        last_scan_date: new Date().toISOString(),
+        health_assesment: health,
+        plant_information: {
+          kingdom: bestMatch.details.taxonomy.kingdom,
+          phylum: bestMatch.details.taxonomy.phylum,
+          class: bestMatch.details.taxonomy.class,
+          order: bestMatch.details.taxonomy.order,
+          family: bestMatch.details.taxonomy.family,
+          genus: bestMatch.details.taxonomy.genus,
+          confidence: (bestMatch.probability * 100).toFixed(1) + "%",
+          probability: (bestMatch.probability * 100).toFixed(1) + "%",
+          description: bestMatch.details.description || "No description available"
+        }
+      };
+
+      const { error } = await supabase
+        .from("usersplants")
+        .insert(plantInfo);
+
+      if (error) {
+        console.error("Supabase Error:", error);
+        throw new Error("Failed to save plant data");
+      }
     }
     async function getLastPlantId() {
       const { data, error} = await supabase.rpc("plant_sequence_value")
