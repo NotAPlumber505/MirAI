@@ -1,13 +1,13 @@
+// Login.tsx
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion, useAnimation } from "framer-motion";
 import { useTheme } from "../contexts/ThemeContext";
 import { Eye, EyeOff } from "lucide-react";
-import ScanButton from "../components/ScanButton";
 import googleIcon from "../assets/google-icon.svg";
 import { supabase } from "../supabaseClient";
 
-export default function Login({ supabase: supabaseProp }: any) {
+export default function Login({ supabase }: { supabase: typeof import("../supabaseClient").supabase }) {
   const { darkMode } = useTheme();
   const navigate = useNavigate();
   const controls = useAnimation();
@@ -39,9 +39,12 @@ export default function Login({ supabase: supabaseProp }: any) {
   }, []);
 
   // Navigate when signed in
-  supabase.auth.onAuthStateChange((event: any) => {
-    if (event === "SIGNED_IN") navigate("/");
-  });
+  useEffect(() => {
+    const { data: listener } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_IN") navigate("/");
+    });
+    return () => listener.subscription.unsubscribe();
+  }, [navigate]);
 
   const validateEmail = (email: string) =>
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -79,6 +82,7 @@ export default function Login({ supabase: supabaseProp }: any) {
       }
     } catch (error: any) {
       console.error("Supabase Error:", error.message);
+      setEmailError(error.message);
     } finally {
       setLoading(false);
     }
@@ -105,6 +109,8 @@ export default function Login({ supabase: supabaseProp }: any) {
     setPasswordError("");
     setShowPassword(false);
   };
+
+  const handleForgotPassword = () => navigate("/forgot-password");
 
   const bgColor = darkMode ? "bg-[var(--background-dark)]" : "bg-[var(--background)]";
   const textColor = darkMode ? "text-white" : "text-[var(--navbar)]";
@@ -162,7 +168,6 @@ export default function Login({ supabase: supabaseProp }: any) {
             {isRegistering ? "Create your MirAI account" : "Welcome back to MirAI 🌿"}
           </h1>
 
-          {/* Username Input (register only) */}
           {isRegistering && (
             <div className="mb-4">
               <label className="block mb-1 text-sm font-semibold">Username</label>
@@ -176,7 +181,6 @@ export default function Login({ supabase: supabaseProp }: any) {
             </div>
           )}
 
-          {/* Email Input */}
           <div className="mb-4">
             <label className="block mb-1 text-sm font-semibold">Email Address</label>
             {emailError && <p className="text-red-500 text-sm mb-1">{emailError}</p>}
@@ -189,7 +193,6 @@ export default function Login({ supabase: supabaseProp }: any) {
             />
           </div>
 
-          {/* Password Input */}
           <div className="mb-2 relative">
             <label className="block mb-1 text-sm font-semibold">Password</label>
             {passwordError && <p className="text-red-500 text-sm mb-1">{passwordError}</p>}
@@ -203,7 +206,7 @@ export default function Login({ supabase: supabaseProp }: any) {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-5 top-[65%] -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              className="absolute right-5 top-[65%] -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
             >
               {showPassword ? <Eye /> : <EyeOff />}
             </button>
@@ -211,30 +214,31 @@ export default function Login({ supabase: supabaseProp }: any) {
 
           {/* Forgot Password */}
           <div className="text-right mb-6">
-            <button className="text-sm text-[var(--primary)] hover:underline cursor-pointer">
+            <button
+              className="text-sm text-[var(--primary)] hover:underline cursor-pointer"
+              onClick={handleForgotPassword}
+            >
               Forgot password?
             </button>
           </div>
 
-          {/* Submit Button */}
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            disabled={loading}
+            disabled={loading || !email || !password}
             onClick={handleSubmit}
             className={`w-full py-3 rounded-xl font-semibold ${buttonColor} transition-all duration-300 cursor-pointer`}
           >
             {loading ? "Processing..." : isRegistering ? "Sign Up" : "Login"}
           </motion.button>
 
-          {/* Google Sign-In */}
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={handleGoogleSignIn}
             className={`mt-4 w-full flex items-center gap-3 py-2 px-4 rounded-xl border font-medium transition-all duration-300 cursor-pointer ${
               darkMode
-                ? "border-gray-600 text-white hover:bg-[var(--secondary-hover)]"
+                ? "border-gray-600 text-white hover:bg-[var(--navbar)] hover:text-[var(--background)]"
                 : "border-gray-600 text-[var(--primary)] hover:bg-gray-100 hover:text-[var(--primary-hover)]"
             }`}
           >
@@ -242,7 +246,6 @@ export default function Login({ supabase: supabaseProp }: any) {
             <span className="text-base font-medium">Sign in with Google</span>
           </motion.button>
 
-          {/* Switch Mode */}
           <p className="mt-6 text-center text-sm">
             {isRegistering ? "Already have an account?" : "Don’t have an account?"}{" "}
             <button
@@ -288,17 +291,13 @@ export default function Login({ supabase: supabaseProp }: any) {
           darkMode ? "bg-white text-[var(--background)]" : "bg-[var(--navbar)] text-white"
         }`}
       >
-        <div className="text-sm md:text-lg font-['Poppins']">
-          © 2025 MirAI. All rights reserved.
-        </div>
-
+        <div className="text-sm md:text-lg font-['Poppins']">© 2025 MirAI. All rights reserved.</div>
         <div
           className="text-sm md:text-lg font-['Poppins'] cursor-pointer hover:underline"
           onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
         >
           Back to Top
         </div>
-
         <Link
           to="/team"
           className="text-sm md:text-lg font-['Poppins'] cursor-pointer hover:underline"
