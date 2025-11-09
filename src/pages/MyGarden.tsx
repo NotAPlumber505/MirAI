@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useTheme } from "../contexts/ThemeContext";
 import { Grid, Columns } from "lucide-react";
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 interface Plant {
   id: number;
@@ -17,6 +17,7 @@ interface Plant {
 export default function MyGarden(props: any) {
   const { darkMode } = useTheme();
   const navigate = useNavigate();
+  const location = useLocation();
   const supabase = props.supabase;
     useEffect(() => {
         if(!props.isLoggedIn){
@@ -27,9 +28,9 @@ export default function MyGarden(props: any) {
         }
         kickIfnotLogged;
         //Implement solver if supabase is null
-        retreievePlants();
         }
-        },[props.isLoggedIn])
+        retreievePlants();
+      },[location.pathname])
 
   // Mock plant data
   const [plants, setPlants] = useState<Plant[]>([
