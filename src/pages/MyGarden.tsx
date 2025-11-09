@@ -3,7 +3,7 @@ import { useTheme } from "../contexts/ThemeContext";
 import { Grid, Columns } from "lucide-react";
 import { motion } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
-
+import PlantDisplay from "../components/PlantDisplay.tsx";
 interface Plant {
   id: number;
   name: string;
@@ -19,18 +19,21 @@ export default function MyGarden(props: any) {
   const navigate = useNavigate();
   const location = useLocation();
   const supabase = props.supabase;
+    useEffect(() => {
+        if(!props.isLoggedIn){
+        const kickIfnotLogged = async () => {
+            const { data, error } = await supabase.auth.getSession();
+            if (!(data.session === null))
+                navigate("/login")
+        }
+        kickIfnotLogged;
+        //Implement solver if supabase is null
+        }
+        retreievePlants();
+      },[location.pathname])
 
-  useEffect(() => {
-    if (!props.isLoggedIn) {
-      const kickIfnotLogged = async () => {
-        const { data } = await supabase.auth.getSession();
-        if (!data.session) navigate("/login");
-      };
-      kickIfnotLogged();
-    }
-  }, [location.pathname]);
-
-  const [plants] = useState<Plant[]>([
+  // Mock plant data
+  const [plants, setPlants] = useState<Plant[]>([
     {
       id: 1,
       name: "Plant One",
@@ -119,53 +122,9 @@ export default function MyGarden(props: any) {
             ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
             : "flex flex-col gap-6 w-full"
         }`}
-      >
-        {plants.map((plant) => (
-          <motion.div
-            key={plant.id}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className={`shadow-lg cursor-pointer transition-all duration-300 overflow-hidden ${
-              layout === "grid"
-                ? "flex flex-col w-full rounded-[30px] bg-[var(--navbar)]"
-                : "flex flex-col md:flex-row w-full max-w-5xl mx-auto rounded-3xl bg-[var(--navbar)]"
-            }`}
-            onClick={() => navigate(`/my-garden/${plant.id}`)}
-            initial="hidden"
-            animate="visible"
-            variants={textVariant}
-          >
-            {/* Image */}
-            <div
-              className={`${
-                layout === "grid" ? "w-full h-48" : "w-full md:w-1/4 h-48 md:h-auto flex-shrink-0"
-              }`}
-            >
-              <img src={plant.imageUrl} alt={plant.name} className="object-cover w-full h-full" />
-            </div>
-
-            {/* Text */}
-            <motion.div
-              className={`flex flex-col p-4 md:p-6 space-y-2 text-left ${
-                layout === "column" ? "w-full md:w-3/4" : ""
-              }`}
-              initial="hidden"
-              animate="visible"
-              variants={textVariant}
-            >
-              <p className="font-bold text-lg md:text-xl text-[var(--background)]">{plant.name}</p>
-              <p className="text-sm md:text-base text-[var(--background)]">
-                Scientific Name: {plant.scientificName}
-              </p>
-              <p className="text-sm md:text-base text-[var(--background)]">Species: {plant.species}</p>
-              <p className="text-sm md:text-base text-[var(--background)]">
-                Overall Health: {plant.overallHealth}
-              </p>
-              <p className="text-sm md:text-base text-[var(--background)]">Last Scan: {plant.lastScan}</p>
-            </motion.div>
-          </motion.div>
-        ))}
-      </div>
+        >
+          <PlantDisplay layout={layout} plants={plants}/>
+        </div>
 
       {/* Mobile-only footer */}
       <footer className="mt-30 mb-10 text-sm block md:hidden text-center">
@@ -175,4 +134,37 @@ export default function MyGarden(props: any) {
       </footer>
     </div>
   );
+  async function retreievePlants() {
+    const { data, error } = await supabase
+    .from("usersplants")
+    .select('plant_path, plant_name, scientific_name, species, overall_health,last_scan_date,id ')
+    if(error){
+      console.log("Unfortunate. Plant not found: " + error)
+      return;
+    }
+    let plants: Plant[] = []
+    await Promise.all( data.map(async (plant :any) => {
+      const { data, error } = await supabase
+    .storage
+    .from("plant_images")
+    .createSignedUrl(plant.plant_path,60)
+    if(error) {
+      console.log("Error retrieving image: " + error);
+    }
+      const plant_image = data.signedUrl;
+      const parsedPlant: Plant = {
+        id: plant.id,
+        name: plant.plant_name,
+        scientificName: plant.scientific_name,
+        species: plant.species,
+        overallHealth: plant.overall_health,
+        lastScan: plant.last_scan_date,
+        imageUrl: plant_image
+      }
+      plants.push(parsedPlant)
+      return plants;
+    })
+  )
+  setPlants(plants)
+  }
 }

@@ -207,29 +207,48 @@ export default function Scan(props: any) {
     console.log("Done!");
   }
 
-  async function getUserID() {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (user) return user.id;
-    console.log("Failed to get user's ID!");
-  }
-  async function uploadFileToBucket(file: any) {
-    const userID = await getUserID();
-    const filePath = `${userID}/flower1.png`;
-    const { data, error } = await supabase.storage.from("plant_images").upload(filePath, file, {
-      cacheControl: "3600",
-      upsert: false,
-    });
-    if (error) {
-      console.log("Error uploading image! Error: " + error);
-      return null;
+    async function getUserID() {
+        const { data: { user }} = await supabase.auth.getUser()
+        if (user) 
+            return user.id
+        else{
+            console.log("Failed to get user's ID!")
+            return;
+        }
     }
-    return filePath;
-  }
+    async function uploadFileToBucket(file:any) {
+        const plantID = await getLastPlantId();
+        const userID = await getUserID();
+        const filePath = `${userID}/plant${plantID}.png`
+        console.log(userID);
+        const { data, error } = await supabase
+        .storage
+        .from('plant_images')
+        .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: false
+        })
+        if(error) {
+            console.log("Error uploading image! Error: " + error);
+            return null;
+        }
+        else {
+            console.log("Uploaded file!");
+        }
+        return filePath;
+    }
 
-  async function insertIntoUsersPlantsTable(filePath: any) {
-    const { error } = await supabase.from("usersplants").insert({ plant_path: filePath });
-    if (error) console.log("Supabase Error: " + error);
-  }
+    async function insertIntoUsersPlantsTable(filePath:any) {
+        const { error } = await supabase.from("usersplants").insert({plant_path: filePath});
+        if (error)
+            console.log("Supabase Error: " + error);
+    }
+    async function getLastPlantId() {
+      const { data, error} = await supabase.rpc("plant_sequence_value")
+      if(error) {
+        console.log("Error fetching plant id!: " + error + "/nKicking back to homepage!");
+        navigate("/");
+      }
+      return data;
+    }
 }
