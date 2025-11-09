@@ -17,7 +17,7 @@ interface Plant {
 export default function MyGarden(props: any) {
   const { darkMode } = useTheme();
   const navigate = useNavigate();
-    const supabase = props.supabase;
+  const supabase = props.supabase;
     useEffect(() => {
         if(!props.isLoggedIn){
         const kickIfnotLogged = async () => {
@@ -27,12 +27,12 @@ export default function MyGarden(props: any) {
         }
         kickIfnotLogged;
         //Implement solver if supabase is null
-
+        retreievePlants();
         }
         },[props.isLoggedIn])
 
   // Mock plant data
-  const [plants] = useState<Plant[]>([
+  const [plants, setPlants] = useState<Plant[]>([
     {
       id: 1,
       name: "Plant One",
@@ -110,6 +110,7 @@ export default function MyGarden(props: any) {
             : "flex flex-col gap-6 w-full"
         }`}
         >
+          {/* This should be made into a component */}
         {plants.map((plant) => (
             <motion.div
             key={plant.id}
@@ -201,4 +202,36 @@ export default function MyGarden(props: any) {
       </footer>
     </div>
   );
+  async function retreievePlants() {
+    const { data, error } = await supabase
+    .from("usersplants")
+    .select('plant_path, plant_name, scientific_name, species, overall_health,last_scan_date ')
+    if(error){
+      console.log("Unfortunate." + error)
+      return;
+    }
+    let plants: Plant[] = []
+    data.map(async (plant :any) => {
+      const { data, error } = await supabase
+    .storage
+    .getBucket(plant.plant_image)
+    if(error) {
+      console.log("Error retrieving image: " + error);
+    }
+      const plant_image = data;
+      console.log(plant_image);
+      const parsedPlant: Plant = {
+        id: plant.id,
+        name: plant.plant_name,
+        scientificName: plant.scientific_name,
+        species: plant.species,
+        overallHealth: plant.overall_health,
+        lastScan: plant.last_scan_date,
+        imageUrl: plant_image
+      }
+      plants.push(parsedPlant)
+    })
+    setPlants(plants);
+
+  }
 }
