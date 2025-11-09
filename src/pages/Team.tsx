@@ -21,6 +21,24 @@ const team: TeamMember[] = [
 export default function MeetTheTeam() {
   const { darkMode } = useTheme();
 
+  // Framer Motion variants
+  const textVariant = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.6 } },
+  };
+
+  const containerVariant = {
+    hidden: {},
+    visible: {
+      transition: { staggerChildren: 0.15 },
+    },
+  };
+
+  const cardVariant = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
+  };
+
   return (
     <div
       className={`min-h-screen px-4 md:px-12 py-12 transition-colors duration-500 ${
@@ -28,20 +46,29 @@ export default function MeetTheTeam() {
       }`}
     >
       {/* Page Header */}
-      <h1
+      <motion.h1
         className={`text-5xl mt-20 md:text-6xl font-bold text-center mb-16 font-[var(--font-logo)] ${
           darkMode ? "text-[var(--primary)]" : "text-[var(--primary)]"
         }`}
+        initial="hidden"
+        animate="visible"
+        variants={textVariant}
       >
         Meet the Team!
-      </h1>
+      </motion.h1>
 
       {/* Team Members */}
-      <div className="flex flex-col md:flex-row justify-center items-center md:items-start md:gap-16 gap-10 flex-wrap md:flex-nowrap">
+      <motion.div
+        className="flex flex-col md:flex-row justify-center items-center md:items-start md:gap-16 gap-10 flex-wrap md:flex-nowrap"
+        initial="hidden"
+        animate="visible"
+        variants={containerVariant}
+      >
         {team.map((member) => (
           <motion.div
             key={member.name}
             whileHover={{ scale: 1.05 }}
+            variants={cardVariant}
             className="flex flex-col items-center text-center w-full md:w-auto max-w-[280px] cursor-pointer transition-all duration-300"
           >
             {/* Circle Image */}
@@ -56,9 +83,7 @@ export default function MeetTheTeam() {
             {/* Name */}
             <p
               className={`text-2xl md:text-3xl font-medium mb-1 whitespace-nowrap ${
-                darkMode
-                  ? "text-[var(--primary)]"
-                  : "text-[var(--primary)]"
+                darkMode ? "text-[var(--primary)]" : "text-[var(--primary)]"
               }`}
             >
               {member.name}
@@ -67,16 +92,14 @@ export default function MeetTheTeam() {
             {/* Role */}
             <p
               className={`text-lg md:text-xl font-normal whitespace-nowrap ${
-                darkMode
-                  ? "text-[var(--navbar)]"
-                  : "text-[var(--navbar)]"
+                darkMode ? "text-[var(--navbar)]" : "text-[var(--navbar)]"
               }`}
             >
               {member.role}
             </p>
           </motion.div>
         ))}
-      </div>
+      </motion.div>
 
       {/* Mobile-only footer */}
       <footer className="mt-30 mb-10 text-sm block md:hidden text-center">

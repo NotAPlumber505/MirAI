@@ -1,32 +1,32 @@
 import { useState, useEffect } from "react";
 import { useTheme } from "../contexts/ThemeContext";
 import { Upload } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import { motion } from "framer-motion";
 
-export default function Scan(props:any) {
-    
+export default function Scan(props: any) {
   const { darkMode } = useTheme();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewURL, setPreviewURL] = useState<string | null>(null);
   const navigate = useNavigate();
   const supabase = props.supabase;
-    //Redirect if not logged in
-    useEffect(() => {
-        if(!props.isLoggedIn){
-        const kickIfnotLogged = async () => {
-            const { data, error } = await supabase.auth.getSession();
-            if (!(data.session === null))
-                navigate("/login")
-        }
-        kickIfnotLogged;
-        //Implement solver if supabase is null
-        
-        }
-    },[props.isLoggedIn]) 
+  const location = useLocation();
+
+  //Redirect if not logged in
+  useEffect(() => {
+    if (!props.isLoggedIn) {
+      const kickIfnotLogged = async () => {
+        const { data } = await supabase.auth.getSession();
+        if (!data.session) navigate("/login");
+      };
+      kickIfnotLogged();
+    }
+  }, [location.pathname]);
+
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-        uploadFileToDatabase(file);
+      uploadFileToDatabase(file);
       setSelectedFile(file);
       setPreviewURL(URL.createObjectURL(file)); // preview the image
     }
@@ -41,6 +41,12 @@ export default function Scan(props:any) {
     setPreviewURL(null);
   };
 
+  // Framer Motion text animation variant
+  const textVariant = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.6 } },
+  };
+
   return (
     <div
       className={`min-h-screen flex flex-col items-center justify-center text-center transition-colors duration-500 px-4
@@ -50,21 +56,28 @@ export default function Scan(props:any) {
       {!selectedFile ? (
         <>
           {/* Title */}
-          <h1 className="text-4xl md:text-5xl font-bold mt-40 mb-30 font-[var(--font-logo)]">
+          <motion.h1
+            className="text-4xl md:text-5xl font-bold mt-40 mb-30 font-[var(--font-logo)]"
+            initial="hidden"
+            animate="visible"
+            variants={textVariant}
+          >
             Upload a photo of your plant 🌱✨
-          </h1>
+          </motion.h1>
 
           {/* Upload Area */}
-          <div
+          <motion.div
             className={`w-80 h-80 mb-50 md:w-[24rem] md:h-[24rem] flex flex-col items-center justify-center rounded-[50px] cursor-pointer shadow-lg transition-all duration-300
               ${darkMode ? "bg-[var(--navbar)] text-[var(--background)]" : "bg-[var(--navbar)] text-white"}
               hover:scale-105 active:scale-95
             `}
             onClick={handleUploadClick}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1, transition: { delay: 0.3, duration: 0.5 } }}
           >
             <Upload className="w-16 h-16 mb-10" />
             <span className="text-2xl font-semibold">Upload Picture</span>
-          </div>
+          </motion.div>
 
           {/* Hidden File Input */}
           <input
@@ -89,70 +102,83 @@ export default function Scan(props:any) {
       ) : (
         <>
           {/* Plant Identified Section */}
-          <h2
-          className={`text-3xl md:text-4xl font-bold mt-10 md:mt-40 mb-6 transition-colors duration-300
-            ${darkMode ? "text-[var(--navbar)]" : "text-[var(--primary)]"}
-          `}
+          <motion.h2
+            className={`text-3xl md:text-4xl font-bold mt-10 md:mt-40 mb-6 transition-colors duration-300 ${
+              darkMode ? "text-[var(--navbar)]" : "text-[var(--primary)]"
+            }`}
+            initial="hidden"
+            animate="visible"
+            variants={textVariant}
           >
             Plant Identified!
-          </h2>
+          </motion.h2>
 
           {/* Image Preview */}
           {previewURL && (
-            <div className="w-full max-w-md mb-8">
+            <motion.div
+              className="w-full max-w-md mb-8"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1, transition: { duration: 0.5 } }}
+            >
               <img
                 src={previewURL}
                 alt="Uploaded Plant"
                 className="w-full h-auto rounded-3xl shadow-xl object-contain transition-all duration-300"
               />
-            </div>
+            </motion.div>
           )}
 
           {/* Plant Info Fields */}
-          <div className="text-left w-full max-w-md space-y-2 md:space-y-3 text-base md:text-lg">
-            {[
-              "Name",
-              "Species",
-              "Common Names",
-              "Family/Genus",
-              "Overall Health",
-              "Scan Date",
-            ].map((label) => (
-              <p key={label}>
-                <span className="font-semibold text-[var(--primary)]">{label}:</span>{" "}
-              </p>
-            ))}
-          </div>
+          <motion.div
+            className="text-left w-full max-w-md space-y-2 md:space-y-3 text-base md:text-lg"
+            initial="hidden"
+            animate="visible"
+            variants={textVariant}
+          >
+            {["Name", "Species", "Common Names", "Family/Genus", "Overall Health", "Scan Date"].map(
+              (label) => (
+                <p key={label}>
+                  <span className="font-semibold text-[var(--primary)]">{label}:</span>{" "}
+                </p>
+              )
+            )}
+          </motion.div>
 
           {/* Upload Another Button */}
-          <button
-          onClick={handleReset}
-          className={`mt-10 mb-4 w-100 h-20 rounded-full text-xl font-medium shadow-md transition-all duration-300 cursor-pointer
+          <motion.button
+            onClick={handleReset}
+            className={`mt-10 mb-4 w-100 h-20 rounded-full text-xl font-medium shadow-md transition-all duration-300 cursor-pointer
             ${darkMode
-            ? "bg-[var(--primary-hover)] text-[var(--background)] hover:bg-[var(--primary)]"
-            : "bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)]"
+              ? "bg-[var(--primary-hover)] text-[var(--background)] hover:bg-[var(--primary)]"
+              : "bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)]"
             }
             hover:scale-105
             active:scale-95
           `}
+            initial="hidden"
+            animate="visible"
+            variants={textVariant}
           >
             Upload another?
-          </button>
+          </motion.button>
 
           {/* View in My Plants Button */}
-          <button
-          onClick={() => navigate("/my-garden")}
-          className={`mt-4 mb-40 w-100 h-20 rounded-full text-xl font-medium shadow-md transition-all duration-300 cursor-pointer
+          <motion.button
+            onClick={() => navigate("/my-garden")}
+            className={`mt-4 mb-40 w-100 h-20 rounded-full text-xl font-medium shadow-md transition-all duration-300 cursor-pointer
             ${darkMode
-            ? "bg-[var(--primary-hover)] text-[var(--background)] hover:bg-[var(--primary)]"
-            : "bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)]"
+              ? "bg-[var(--primary-hover)] text-[var(--background)] hover:bg-[var(--primary)]"
+              : "bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)]"
             }
             hover:scale-105
             active:scale-95
           `}
+            initial="hidden"
+            animate="visible"
+            variants={textVariant}
           >
             View in My Plants
-          </button>
+          </motion.button>
 
           {/* Mobile-only footer */}
           <footer className="mt-16 mb-10 text-sm block md:hidden">
@@ -170,16 +196,16 @@ export default function Scan(props:any) {
   );
 
   //Database functions
-    async function uploadFileToDatabase(file:any) {
-        const filePath = await uploadFileToBucket(file);
-        if(filePath === null){
-            console.log("Failed upload! Kicking user to homepage.")
-            navigate("/");
-            return;
-        }
-        await insertIntoUsersPlantsTable(filePath);
-        console.log("Done!");
+  async function uploadFileToDatabase(file: any) {
+    const filePath = await uploadFileToBucket(file);
+    if (filePath === null) {
+      console.log("Failed upload! Kicking user to homepage.");
+      navigate("/");
+      return;
     }
+    await insertIntoUsersPlantsTable(filePath);
+    console.log("Done!");
+  }
 
     async function getUserID() {
         const { data: { user }} = await supabase.auth.getUser()

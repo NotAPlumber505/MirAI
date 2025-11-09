@@ -65,6 +65,12 @@ export default function MyGarden(props: any) {
 
   const [layout, setLayout] = useState<"grid" | "column">("grid");
 
+  // Framer Motion text animation variant
+  const textVariant = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.6 } },
+  };
+
   return (
     <div
       className={`min-h-screen px-4 py-6 md:px-12 transition-colors duration-500 ${
@@ -72,9 +78,14 @@ export default function MyGarden(props: any) {
       }`}
     >
       {/* Page Header */}
-      <h1 className="text-4xl md:text-5xl font-bold mt-30 mb-15 font-[var(--font-logo)] text-center">
+      <motion.h1
+        className="text-4xl md:text-5xl font-bold mt-30 mb-15 font-[var(--font-logo)] text-center"
+        initial="hidden"
+        animate="visible"
+        variants={textVariant}
+      >
         My Garden
-      </h1>
+      </motion.h1>
 
       {/* Layout toggle (desktop only) */}
       <div className="hidden md:flex justify-center gap-4 mb-6">
@@ -103,10 +114,11 @@ export default function MyGarden(props: any) {
           <Columns size={20} />
         </button>
       </div>
-        {/* Plants Grid */}
-        <div
+
+      {/* Plants Grid */}
+      <div
         className={`${
-            layout === "grid"
+          layout === "grid"
             ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
             : "flex flex-col gap-6 w-full"
         }`}

@@ -5,20 +5,22 @@ import Home from "./pages/Home";
 import Profile from "./pages/Profile";
 import Scan from "./pages/Scan";
 import MyGarden from "./pages/MyGarden";
+import DetailedView from "./pages/DetailedView"; // import DetailedView
 import Login from "./pages/Login";
 import Team from "./pages/Team";
-import { createClient } from "@supabase/supabase-js"
+import { createClient } from "@supabase/supabase-js";
 
-const supabase = createClient(import.meta.env.VITE_SUPABASE_URL,import.meta.env.VITE_SUPABASE_KEY)
+const supabase = createClient(
+  import.meta.env.VITE_SUPABASE_URL,
+  import.meta.env.VITE_SUPABASE_KEY
+);
 
 export default function App() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-
-  const [isLoggedIn,setIsLoggedIn] = useState(false)
-
-   supabase.auth.onAuthStateChange((event, session) => {
-      checkLogin();
-   });
+  useEffect(() => {
+    checkLogin();
+  }, []);
 
   return (
     <Router>
@@ -26,9 +28,20 @@ export default function App() {
         {/* Pages with navbar and footer */}
         <Route element={<NavbarLayout isLoggedIn={isLoggedIn} />}>
           <Route path="/" element={<Home />} />
-          <Route path="/scan" element={<Scan  isLoggedIn={isLoggedIn} supabase={supabase} />} />
-          <Route path="/my-garden" element={<MyGarden isLoggedIn={isLoggedIn} supabase={supabase} />} />
-          <Route path="/profile" element={<Profile isLoggedIn={isLoggedIn} supabase={supabase}/>} />
+          <Route
+            path="/scan"
+            element={<Scan isLoggedIn={isLoggedIn} supabase={supabase} />}
+          />
+          <Route
+            path="/my-garden"
+            element={<MyGarden isLoggedIn={isLoggedIn} supabase={supabase} />}
+          />
+          {/* Detailed View route */}
+          <Route path="/my-garden/:id" element={<DetailedView />} />
+          <Route
+            path="/profile"
+            element={<Profile isLoggedIn={isLoggedIn} supabase={supabase} />}
+          />
           <Route path="/team" element={<Team />} />
         </Route>
 
@@ -38,14 +51,11 @@ export default function App() {
     </Router>
   );
 
-  //Database functions
+  // Database functions
   async function checkLogin() {
     const { data, error } = await supabase.auth.getSession();
-    if(error) {
+    if (error) {
       console.log("Supabase Error:" + error);
-    }
-    else 
-      setIsLoggedIn(!(data.session === null));
+    } else setIsLoggedIn(!(data.session === null));
   }
-  
 }
