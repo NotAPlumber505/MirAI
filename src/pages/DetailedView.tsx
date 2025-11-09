@@ -2,16 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useTheme } from "../contexts/ThemeContext";
-
-// --- Conditionally import Supabase if keys exist ---
-let supabase: any = null;
-if (import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY) {
-  const { createClient } = await import("@supabase/supabase-js");
-  supabase = createClient(
-    import.meta.env.VITE_SUPABASE_URL,
-    import.meta.env.VITE_SUPABASE_ANON_KEY
-  );
-}
+import { supabase } from "../supabaseClient";
 
 // --- Mock plant & health data for frontend testing ---
 const mockPlant = {
