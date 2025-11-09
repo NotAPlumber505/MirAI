@@ -23,7 +23,7 @@ const mockPlant: PlantDetails = {
     genus: "Plantae",
     confidence: "95%",
     probability: "98%",
-    description: "This is a mock plant description."
+    description: {value: "This is a mock plant description."}
   },
   imageUrl: "https://placehold.co/400x300",
 };
@@ -74,14 +74,20 @@ interface DiseaseSuggestion {
   name: string;
   probability: number;
   similar_images?: SimilarImage[];
-  details?: { language?: string; entity_id?: string };
+  details?: {
+    language?: string;
+    entity_id?: string;
+    description: string;
+
+    };
 }
 
 interface HealthResult {
   is_plant?: { probability?: number; threshold?: number; binary?: boolean };
   is_healthy?: { binary?: boolean; threshold?: number; probability?: number };
-  disease?: { suggestions?: DiseaseSuggestion[] };
-  question?: any;
+  disease?: { suggestions?: DiseaseSuggestion[] 
+    question?: any;
+  };
 }
 
 export default function DetailedView() {
@@ -270,9 +276,9 @@ export default function DetailedView() {
             )}
           </p>
 
-          {health.question && (
+          {health?.disease?.question && (
             <div className="mb-4">
-              <p className="font-medium mb-2">{health.question.text}</p>
+              <p className="font-medium mb-2">{health?.disease?.question.text}</p>
               <div className="flex gap-3 mb-2">
                 <button
                   onClick={() => setSelectedAnswer("yes")}
@@ -280,7 +286,7 @@ export default function DetailedView() {
                     selectedAnswer === "yes" ? "bg-[var(--primary)]" : "bg-[var(--primary-hover)]"
                   }`}
                 >
-                  {health.question.options.yes.translation}
+                  {health?.disease?.question.options.yes.translation}
                 </button>
                 <button
                   onClick={() => setSelectedAnswer("no")}
@@ -288,7 +294,7 @@ export default function DetailedView() {
                     selectedAnswer === "no" ? "bg-[var(--primary)]" : "bg-[var(--primary-hover)]"
                   }`}
                 >
-                  {health.question.options.no.translation}
+                  {health?.disease?.question.options.no.translation}
                 </button>
               </div>
               {selectedAnswer && (
