@@ -5,20 +5,26 @@ import { useTheme } from "../contexts/ThemeContext";
 import { supabase } from "../supabaseClient";
 
 // --- Mock plant & health data for frontend testing ---
-const mockPlant = {
+const mockPlant: PlantDetails = {
   id: 1,
-  commonName: "Mock Plant",
-  scientificName: "Plantae Mockus",
-  confidence: "95%",
-  classificationRank: "Species",
-  probability: "98%",
-  description: "This is a mock plant description.",
-  kingdom: "Plantae",
-  phylum: "Tracheophyta",
-  class: "Magnoliopsida",
-  order: "Rosales",
-  family: "Rosaceae",
-  genus: "Plantae",
+  user_id: "00000000-0000-0000-0000-000000000000",
+  plant_path: "mock/plant.jpg",
+  plant_name: "Mock Plant",
+  scientific_name: "Plantae Mockus",
+  species: "Mock Species",
+  overall_health: "Good",
+  last_scan_date: "2025-11-09",
+  plant_information: {
+    kingdom: "Plantae",
+    phylum: "Tracheophyta",
+    class: "Magnoliopsida",
+    order: "Rosales",
+    family: "Rosaceae",
+    genus: "Plantae",
+    confidence: "95%",
+    probability: "98%",
+    description: "This is a mock plant description."
+  },
   imageUrl: "https://placehold.co/400x300",
 };
 
@@ -29,19 +35,27 @@ const mockHealth = {
 
 interface PlantDetails {
   id: number;
-  commonName: string;
-  scientificName: string;
-  confidence?: string;
-  classificationRank?: string;
-  probability?: string;
-  description: string;
-  kingdom?: string;
-  phylum?: string;
-  class?: string;
-  order?: string;
-  family?: string;
-  genus?: string;
-  imageUrl: string;
+  user_id: string;
+  plant_path: string;
+  plant_name: string;
+  avatar?: string;
+  scientific_name: string;
+  species: string;
+  overall_health: string;
+  last_scan_date: string;
+  health_assesment?: any;
+  plant_information?: {
+    kingdom?: string;
+    phylum?: string;
+    class?: string;
+    order?: string;
+    family?: string;
+    genus?: string;
+    confidence?: string;
+    probability?: string;
+    description?: string;
+  };
+  imageUrl?: string; // This will be generated from plant_path
 }
 
 interface SimilarImage {
@@ -92,7 +106,7 @@ export default function DetailedView() {
           setHealth(mockHealth);
         } else {
           const { data, error } = await supabase
-            .from("plants")
+            .from("usersplants")
             .select("*")
             .eq("id", plantId)
             .single();
@@ -101,11 +115,26 @@ export default function DetailedView() {
             console.error(error);
             setError("Failed to load plant.");
             setPlant(null);
-          } else {
+          } else if (data) {
+            // Get signed URL for the plant image
+            const { data: imageData, error: imageError } = await supabase
+              .storage
+              .from("plant_images")
+              .createSignedUrl(data.plant_path, 60);
+
+            if (imageError) {
+              console.error("Error getting image URL:", imageError);
+              data.imageUrl = "https://placehold.co/400x300"; // Fallback image
+            } else {
+              data.imageUrl = imageData.signedUrl;
+            }
+
             setPlant(data);
 
-            // Fetch health only if Plant.id key exists
-            if (data.imageUrl && import.meta.env.VITE_PLANT_ID_KEY) {
+            // Use stored health assessment if available, otherwise try Plant.id API
+            if (data.health_assesment) {
+              setHealth(data.health_assesment);
+            } else if (data.imageUrl && import.meta.env.VITE_PLANT_ID_KEY) {
               fetchHealth(data.imageUrl);
             } else {
               setHealth(mockHealth);
