@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom"
 
-export default function Login(props) {
+export default function Login(props:any) {
     const supabase = props.supabase;
     const [userEmail,setUserEmail] = useState("");
     const [userPassword,setUserPassword] = useState("");
