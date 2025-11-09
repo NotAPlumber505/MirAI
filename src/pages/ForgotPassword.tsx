@@ -1,68 +1,94 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
-import { useTheme } from "../contexts/ThemeContext";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "../supabaseClient";
+import { Mail } from "lucide-react";
 
-export default function ForgotPassword({ supabase }: any) {
-  const { darkMode } = useTheme();
-  const navigate = useNavigate();
+interface ForgotPasswordProps {
+  supabase: typeof supabase;
+}
 
+export default function ForgotPassword({ supabase }: ForgotPasswordProps) {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
-  const handleSendReset = async () => {
-    setLoading(true);
+  const handleForgotPassword = async () => {
     setMessage("");
+
+    if (!email) {
+      setMessage("Please enter your email address.");
+      return;
+    }
+
+    setLoading(true);
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: window.location.origin + "/login", // user comes back to login after reset
-      });
+      const redirectTo = `${window.location.origin}/reset-password?email=${encodeURIComponent(email)}`;
+      const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
+
       if (error) throw error;
-      setMessage("Check your email for a password reset link!");
-    } catch (error: any) {
-      setMessage("Error: " + error.message);
+
+      setMessage(
+        "✅ If your email is registered, a password reset link has been sent. Please check your inbox."
+      );
+
+      // Optional: redirect to login page after a few seconds
+      // setTimeout(() => navigate("/login"), 3000);
+    } catch (err: any) {
+      setMessage("Error sending reset email: " + err.message);
     } finally {
       setLoading(false);
     }
   };
 
-  const bgColor = darkMode ? "bg-[var(--background-dark)] text-white" : "bg-[var(--background)] text-[var(--navbar)]";
-  const inputBg = darkMode ? "bg-[#1f1f1f]" : "bg-white";
-
   return (
-    <div className={`min-h-screen flex items-center justify-center px-6 ${bgColor}`}>
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7 }}
-        className={`w-full max-w-md rounded-2xl p-8 shadow-lg ${inputBg}`}
-      >
-        <h1 className="text-2xl font-bold text-center mb-6">Forgot Password</h1>
-        <p className="text-center mb-4">
-          Enter your email to receive a password reset link.
-        </p>
+    <div className="min-h-screen flex flex-col items-center justify-center px-6">
+      <div className="w-full max-w-md bg-white shadow-lg rounded-2xl p-8">
+        <h1 className="text-2xl font-bold mb-6 text-center text-[var(--primary)]">
+          Forgot Password
+        </h1>
 
-        <input
-          type="email"
-          placeholder="you@example.com"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className={`w-full px-4 py-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-[var(--primary)] mb-4 ${inputBg}`}
-        />
+        {message && (
+          <p
+            className={`mb-4 text-center ${
+              message.startsWith("✅")
+                ? "text-green-600 font-medium"
+                : "text-red-600 font-medium"
+            }`}
+          >
+            {message}
+          </p>
+        )}
 
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={handleSendReset}
+        <div className="relative w-full mb-4">
+          <input
+            type="email"
+            placeholder="Enter your email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full px-4 py-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-[var(--primary)] pr-10"
+          />
+          <Mail
+            size={20}
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"
+          />
+        </div>
+
+        <button
+          onClick={handleForgotPassword}
           disabled={loading}
-          className="w-full py-3 rounded-xl font-semibold bg-[var(--primary)] text-white"
+          className="w-full py-3 rounded-xl font-semibold bg-[var(--primary)] text-white cursor-pointer hover:opacity-90 transition"
         >
-          {loading ? "Sending..." : "Send Reset Email"}
-        </motion.button>
+          {loading ? "Sending..." : "Send Reset Link"}
+        </button>
 
-        {message && <p className="text-center mt-4 text-sm">{message}</p>}
-      </motion.div>
+        <button
+          onClick={() => navigate("/login")}
+          className="w-full mt-4 py-3 rounded-xl font-semibold text-[var(--primary)] border border-[var(--primary)] cursor-pointer hover:bg-[var(--primary)] hover:text-white transition"
+        >
+          Back to Login
+        </button>
+      </div>
     </div>
   );
 }
