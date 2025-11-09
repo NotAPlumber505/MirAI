@@ -19,20 +19,17 @@ export default function MyGarden(props: any) {
   const navigate = useNavigate();
   const location = useLocation();
   const supabase = props.supabase;
+
   useEffect(() => {
-    if(!props.isLoggedIn){
-    const kickIfnotLogged = async () => {
-        const { data, error } = await supabase.auth.getSession();
-        if (!(data.session === null))
-            navigate("/login")
+    if (!props.isLoggedIn) {
+      const kickIfnotLogged = async () => {
+        const { data } = await supabase.auth.getSession();
+        if (!data.session) navigate("/login");
+      };
+      kickIfnotLogged();
     }
-    kickIfnotLogged;
-    //Implement solver if supabase is null
+  }, [location.pathname]);
 
-    }
-    },[location.pathname])
-
-  // Mock plant data
   const [plants] = useState<Plant[]>([
     {
       id: 1,
@@ -65,6 +62,12 @@ export default function MyGarden(props: any) {
 
   const [layout, setLayout] = useState<"grid" | "column">("grid");
 
+  // Framer Motion text animation variant
+  const textVariant = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.6 } },
+  };
+
   return (
     <div
       className={`min-h-screen px-4 py-6 md:px-12 transition-colors duration-500 ${
@@ -72,9 +75,14 @@ export default function MyGarden(props: any) {
       }`}
     >
       {/* Page Header */}
-      <h1 className="text-4xl md:text-5xl font-bold mt-30 mb-15 font-[var(--font-logo)] text-center">
+      <motion.h1
+        className="text-4xl md:text-5xl font-bold mt-30 mb-15 font-[var(--font-logo)] text-center"
+        initial="hidden"
+        animate="visible"
+        variants={textVariant}
+      >
         My Garden
-      </h1>
+      </motion.h1>
 
       {/* Layout toggle (desktop only) */}
       <div className="hidden md:flex justify-center gap-4 mb-6">
@@ -103,96 +111,61 @@ export default function MyGarden(props: any) {
           <Columns size={20} />
         </button>
       </div>
-        {/* Plants Grid */}
-        <div
+
+      {/* Plants Grid */}
+      <div
         className={`${
-            layout === "grid"
+          layout === "grid"
             ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
             : "flex flex-col gap-6 w-full"
         }`}
-        >
+      >
         {plants.map((plant) => (
-            <motion.div
+          <motion.div
             key={plant.id}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             className={`shadow-lg cursor-pointer transition-all duration-300 overflow-hidden ${
-                layout === "grid"
-                ? "flex flex-col w-full rounded-[30px] bg-[var(--navbar)]" // fully rounded, grid
-                : "flex flex-col md:flex-row w-full max-w-5xl mx-auto rounded-3xl bg-[var(--navbar)]" // column
+              layout === "grid"
+                ? "flex flex-col w-full rounded-[30px] bg-[var(--navbar)]"
+                : "flex flex-col md:flex-row w-full max-w-5xl mx-auto rounded-3xl bg-[var(--navbar)]"
             }`}
             onClick={() => navigate(`/my-garden/${plant.id}`)}
-            >
+            initial="hidden"
+            animate="visible"
+            variants={textVariant}
+          >
             {/* Image */}
             <div
-                className={`${
-                layout === "grid"
-                    ? "w-full h-48"
-                    : "w-full md:w-1/4 h-48 md:h-auto flex-shrink-0"
-                }`}
+              className={`${
+                layout === "grid" ? "w-full h-48" : "w-full md:w-1/4 h-48 md:h-auto flex-shrink-0"
+              }`}
             >
-                <img
-                src={plant.imageUrl}
-                alt={plant.name}
-                className="object-cover w-full h-full"
-                />
+              <img src={plant.imageUrl} alt={plant.name} className="object-cover w-full h-full" />
             </div>
 
             {/* Text */}
-            <div
-                className={`flex flex-col p-4 md:p-6 space-y-2 text-left ${
+            <motion.div
+              className={`flex flex-col p-4 md:p-6 space-y-2 text-left ${
                 layout === "column" ? "w-full md:w-3/4" : ""
-                }`}
+              }`}
+              initial="hidden"
+              animate="visible"
+              variants={textVariant}
             >
-                <p
-                className={`font-bold text-lg md:text-xl ${
-                    layout === "grid"
-                    ? "text-[var(--background)]"
-                    : "text-[var(--background)]"
-                }`}
-                >
-                {plant.name}
-                </p>
-                <p
-                className={`text-sm md:text-base ${
-                    layout === "grid"
-                    ? "text-[var(--background)]"
-                    : "text-[var(--background)]"
-                }`}
-                >
+              <p className="font-bold text-lg md:text-xl text-[var(--background)]">{plant.name}</p>
+              <p className="text-sm md:text-base text-[var(--background)]">
                 Scientific Name: {plant.scientificName}
-                </p>
-                <p
-                className={`text-sm md:text-base ${
-                    layout === "grid"
-                    ? "text-[var(--background)]"
-                    : "text-[var(--background)]"
-                }`}
-                >
-                Species: {plant.species}
-                </p>
-                <p
-                className={`text-sm md:text-base ${
-                    layout === "grid"
-                    ? "text-[var(--background)]"
-                    : "text-[var(--background)]"
-                }`}
-                >
+              </p>
+              <p className="text-sm md:text-base text-[var(--background)]">Species: {plant.species}</p>
+              <p className="text-sm md:text-base text-[var(--background)]">
                 Overall Health: {plant.overallHealth}
-                </p>
-                <p
-                className={`text-sm md:text-base ${
-                    layout === "grid"
-                    ? "text-[var(--background)]"
-                    : "text-[var(--background)]"
-                }`}
-                >
-                Last Scan: {plant.lastScan}
-                </p>
-            </div>
+              </p>
+              <p className="text-sm md:text-base text-[var(--background)]">Last Scan: {plant.lastScan}</p>
             </motion.div>
+          </motion.div>
         ))}
-        </div>
+      </div>
 
       {/* Mobile-only footer */}
       <footer className="mt-30 mb-10 text-sm block md:hidden text-center">
