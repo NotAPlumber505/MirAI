@@ -11,7 +11,12 @@ export default function Profile({ supabase, isLoggedIn }: any) {
   const [username, setUsername] = useState("");
   const currentAvatar = avatars[index];
 
-  // Fetch avatars from backend when logged in
+  // Framer Motion text animation variant
+  const textVariant = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.6 } },
+  };
+
   useEffect(() => {
     const fetchAvatars = async () => {
       if (!isLoggedIn) {
@@ -43,7 +48,6 @@ export default function Profile({ supabase, isLoggedIn }: any) {
   async function deleteAvatar(indexToDelete: number) {
     const avatarToDelete = avatars[indexToDelete];
 
-    // TODO: Replace with real backend delete request
     const { error } = await supabase
       .from("avatars")
       .delete()
@@ -66,13 +70,16 @@ export default function Profile({ supabase, isLoggedIn }: any) {
       }`}
     >
       {/* 🖐️ Greeting */}
-      <h1
+      <motion.h1
         className={`absolute top-16 md:top-30 left-8 text-3xl md:text-6xl font-semibold pb-8 md:pb-0 ${
           darkMode ? "text-[var(--primary)]" : "text-[var(--primary)]"
         }`}
+        initial="hidden"
+        animate="visible"
+        variants={textVariant}
       >
         Hello, {username}! 🌿
-      </h1>
+      </motion.h1>
 
       {/* 🧭 Desktop Logout */}
       <motion.button
@@ -91,7 +98,12 @@ export default function Profile({ supabase, isLoggedIn }: any) {
       {/* 🪴 No Avatars */}
       {avatars.length === 0 ? (
         <div className="relative w-full flex flex-col justify-center items-center text-center px-6 md:px-16 flex-1">
-          <div className="flex flex-col justify-center items-center h-full">
+          <motion.div
+            className="flex flex-col justify-center items-center h-full"
+            initial="hidden"
+            animate="visible"
+            variants={textVariant}
+          >
             <h2
               className={`text-3xl font-bold mb-4 ${
                 darkMode ? "text-[var(--primary)]" : "text-[var(--primary)]"
@@ -114,12 +126,17 @@ export default function Profile({ supabase, isLoggedIn }: any) {
             >
               Go to Scan Page
             </motion.button>
-          </div>
+          </motion.div>
         </div>
       ) : (
         <>
           {/* 🌻 Left: Avatar Display */}
-          <div className="w-full md:w-1/2 flex flex-col items-center md:items-start mt-40 md:mt-56 mb-8 md:mb-0">
+          <motion.div
+            className="w-full md:w-1/2 flex flex-col items-center md:items-start mt-40 md:mt-56 mb-8 md:mb-0"
+            initial="hidden"
+            animate="visible"
+            variants={textVariant}
+          >
             <h1
               className={`text-3xl md:text-5xl font-bold mb-6 ${
                 darkMode ? "text-[var(--primary)]" : "text-[var(--primary)]"
@@ -175,10 +192,15 @@ export default function Profile({ supabase, isLoggedIn }: any) {
             >
               Free This Plant 🌾
             </motion.button>
-          </div>
+          </motion.div>
 
           {/* 🌿 Right: Plant Info */}
-          <div className="w-full md:w-1/2 flex flex-col md:pl-10 text-left">
+          <motion.div
+            className="w-full md:w-1/2 flex flex-col md:pl-10 text-left"
+            initial="hidden"
+            animate="visible"
+            variants={textVariant}
+          >
             <h2
               className={`text-4xl font-semibold mt-10 md:mt-40 mb-4 text-center md:text-left ${
                 darkMode ? "text-[var(--primary)]" : "text-[var(--primary)]"
@@ -240,7 +262,7 @@ export default function Profile({ supabase, isLoggedIn }: any) {
                 {currentAvatar?.lastScan}
               </p>
             </div>
-          </div>
+          </motion.div>
         </>
       )}
 
@@ -260,11 +282,7 @@ export default function Profile({ supabase, isLoggedIn }: any) {
 
       {/* 📱 Mobile Footer */}
       <footer className="absolute bottom-4 left-1/2 -translate-x-1/2 text-sm block md:hidden text-center">
-        <p
-          className={`${
-            darkMode ? "text-white" : "text-[var(--navbar)]"
-          } transition-colors duration-300`}
-        >
+        <p className={`${darkMode ? "text-white" : "text-[var(--navbar)]"} transition-colors duration-300`}>
           © 2025 MirAI. All rights reserved.
         </p>
       </footer>
