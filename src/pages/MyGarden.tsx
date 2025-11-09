@@ -131,7 +131,7 @@ export default function MyGarden(props: any) {
       return;
     }
     let plants: Plant[] = []
-    data.map(async (plant :any) => {
+    await Promise.all( data.map(async (plant :any) => {
       const { data, error } = await supabase
     .storage
     .from("plant_images")
@@ -150,7 +150,9 @@ export default function MyGarden(props: any) {
         imageUrl: plant_image
       }
       plants.push(parsedPlant)
+      return plants;
     })
-    setPlants(plants);
+  )
+  setPlants(plants)
   }
 }
