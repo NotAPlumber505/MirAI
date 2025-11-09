@@ -23,7 +23,7 @@ const mockPlant: PlantDetails = {
     genus: "Plantae",
     confidence: "95%",
     probability: "98%",
-    description: "This is a mock plant description."
+    description: { value: "This is a mock plant description." }
   },
   imageUrl: "https://placehold.co/400x300",
 };
