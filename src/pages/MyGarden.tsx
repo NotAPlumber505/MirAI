@@ -206,21 +206,21 @@ export default function MyGarden(props: any) {
   async function retreievePlants() {
     const { data, error } = await supabase
     .from("usersplants")
-    .select('plant_path, plant_name, scientific_name, species, overall_health,last_scan_date ')
+    .select('plant_path, plant_name, scientific_name, species, overall_health,last_scan_date,id ')
     if(error){
-      console.log("Unfortunate." + error)
+      console.log("Unfortunate. Plant not found: " + error)
       return;
     }
     let plants: Plant[] = []
     data.map(async (plant :any) => {
       const { data, error } = await supabase
     .storage
-    .getBucket(plant.plant_image)
+    .from("plant_images")
+    .createSignedUrl(plant.plant_path,60)
     if(error) {
       console.log("Error retrieving image: " + error);
     }
-      const plant_image = data;
-      console.log(plant_image);
+      const plant_image = data.signedUrl;
       const parsedPlant: Plant = {
         id: plant.id,
         name: plant.plant_name,
@@ -233,6 +233,5 @@ export default function MyGarden(props: any) {
       plants.push(parsedPlant)
     })
     setPlants(plants);
-
   }
 }

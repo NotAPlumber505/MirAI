@@ -191,8 +191,9 @@ export default function Scan(props:any) {
         }
     }
     async function uploadFileToBucket(file:any) {
+        const plantID = await getLastPlantId();
         const userID = await getUserID();
-        const filePath = `${userID}/flower1.png`
+        const filePath = `${userID}/plant${plantID}.png`
         console.log(userID);
         const { data, error } = await supabase
         .storage
@@ -212,8 +213,16 @@ export default function Scan(props:any) {
     }
 
     async function insertIntoUsersPlantsTable(filePath:any) {
-        const { error } = await supabase.from("usersplants").insert({plant_path : filePath});
+        const { error } = await supabase.from("usersplants").insert({plant_path: filePath});
         if (error)
             console.log("Supabase Error: " + error);
+    }
+    async function getLastPlantId() {
+      const { data, error} = await supabase.rpc("plant_sequence_value")
+      if(error) {
+        console.log("Error fetching plant id!: " + error + "/nKicking back to homepage!");
+        navigate("/");
+      }
+      return data;
     }
 }
