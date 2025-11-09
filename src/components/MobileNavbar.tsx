@@ -31,7 +31,7 @@ export default function MobileNavbar() {
       {/* Floating Theme Toggle Button */}
       <button
         onClick={toggleDarkMode}
-        className={`fixed bottom-20 right-6 z-50 p-3 rounded-full shadow-lg transition-all duration-300
+        className={`fixed bottom-25 right-6 z-50 p-3 rounded-full shadow-lg transition-all duration-300
         ${darkMode ? "bg-[var(--primary)] text-[var(--background)]" : "bg-[var(--navbar)] text-white"}
         hover:scale-105 md:hidden`}
       >
@@ -42,7 +42,7 @@ export default function MobileNavbar() {
       {showTopButton && (
         <button
           onClick={scrollToTop}
-          className={`fixed bottom-32 right-6 z-50 p-3 rounded-full shadow-lg transition-all duration-300
+          className={`fixed bottom-40 right-6 z-50 p-3 rounded-full shadow-lg transition-all duration-300
           ${darkMode ? "bg-[var(--primary)] text-[var(--background)]" : "bg-[var(--navbar)] text-white"}
           hover:scale-105 md:hidden`}
         >
