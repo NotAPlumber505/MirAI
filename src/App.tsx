@@ -16,9 +16,11 @@ export default function App() {
 
   const [isLoggedIn,setIsLoggedIn] = useState(false)
 
-   supabase.auth.onAuthStateChange((event, session) => {
+
+   useEffect(() => {
+      console.log("Change!")
       checkLogin();
-   });
+   },[]);
 
   return (
     <Router>

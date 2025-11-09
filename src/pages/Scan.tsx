@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useTheme } from "../contexts/ThemeContext";
 import { Upload } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 export default function Scan(props:any) {
     
@@ -10,6 +10,7 @@ export default function Scan(props:any) {
   const [previewURL, setPreviewURL] = useState<string | null>(null);
   const navigate = useNavigate();
   const supabase = props.supabase;
+  const location = useLocation();
     //Redirect if not logged in
     useEffect(() => {
         if(!props.isLoggedIn){
@@ -22,7 +23,7 @@ export default function Scan(props:any) {
         //Implement solver if supabase is null
         
         }
-    },[props.isLoggedIn]) 
+    },[location.pathname]) 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
