@@ -17,9 +17,11 @@ function ResetPasswordWrapper({ isLoggedIn }: { isLoggedIn: boolean }) {
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const token = searchParams.get("token");
+  const hasHashToken = typeof window !== 'undefined' && (window.location.hash?.includes('access_token=') || location.hash?.includes('access_token='));
+  const hasRecoveryFlag = searchParams.get('recovery') === '1' || !!searchParams.get('email');
 
-  // If a token exists in URL, always render ResetPassword
-  if (token) return <ResetPassword />;
+  // If a token, hash access_token, or recovery flag exists, always render ResetPassword
+  if (token || hasHashToken || hasRecoveryFlag) return <ResetPassword />;
 
   // Otherwise, only render if not logged in
   return !isLoggedIn ? <ResetPassword /> : <Navigate to="/" replace />;

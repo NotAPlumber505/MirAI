@@ -6,16 +6,54 @@ import mario from "../assets/mario.png";
 import marcos from "../assets/marcos.png";
 import cristian from "../assets/cristian.png";
 
+interface ExtendedTeamMember extends TeamMember {
+  bullets: string[];
+  orderMobile: number; // order for mobile column layout
+  orderDesktop: number; // order for desktop row layout
+}
+
 interface TeamMember {
   name: string;
   role: string;
   imageSrc: string;
 }
 
-const team: TeamMember[] = [
-  { name: "Marcos Arrazola", role: "Frontend Developer", imageSrc: marcos },
-  { name: "Mario Casas", role: "Project Lead", imageSrc: mario },
-  { name: "Cristian Mantilla", role: "Backend Developer", imageSrc: cristian },
+// Mario (Project Lead) should appear first on mobile but centered (second) on desktop.
+const team: ExtendedTeamMember[] = [
+  {
+    name: "Marcos Arrazola",
+    role: "Frontend Developer",
+    imageSrc: marcos,
+    bullets: [
+      "Designed frontend flow for pages, navbar, footer",
+      "Created avatar assets and logo asset",
+    ],
+    orderMobile: 2,
+    orderDesktop: 1,
+  },
+  {
+    name: "Mario Casas",
+    role: "Project Lead",
+    imageSrc: mario,
+    bullets: [
+      "Connected frontend to backend",
+      "Designed initial frontend wireframe",
+    ],
+    orderMobile: 1,
+    orderDesktop: 2, // Center position on desktop row
+  },
+  {
+    name: "Cristian Mantilla",
+    role: "Backend Developer",
+    imageSrc: cristian,
+    bullets: [
+      "Designed Supabase schema",
+      "Implemented Plant.id API integration (Scan, My Garden, Profile)",
+      "Implemented Supabase connection and OAuth for auth pages",
+    ],
+    orderMobile: 3,
+    orderDesktop: 3,
+  },
 ];
 
 export default function MeetTheTeam() {
@@ -57,9 +95,9 @@ export default function MeetTheTeam() {
         Meet the Team!
       </motion.h1>
 
-      {/* Team Members */}
+      {/* Team Members Enhanced */}
       <motion.div
-        className="flex flex-col md:flex-row justify-center items-center md:items-start md:gap-16 gap-10 flex-wrap md:flex-nowrap"
+        className="flex flex-col md:flex-row justify-center items-stretch md:items-start md:gap-20 gap-14 flex-wrap md:flex-nowrap"
         initial="hidden"
         animate="visible"
         variants={containerVariant}
@@ -67,22 +105,23 @@ export default function MeetTheTeam() {
         {team.map((member) => (
           <motion.div
             key={member.name}
-            whileHover={{ scale: 1.05 }}
+            whileHover={{ scale: 1.04 }}
             variants={cardVariant}
-            className="flex flex-col items-center text-center w-full md:w-auto max-w-[280px] cursor-pointer transition-all duration-300"
+            className={`flex flex-col items-center text-center w-full md:w-[320px] xl:w-[360px] cursor-pointer transition-all duration-300 order-${member.orderMobile} md:order-${member.orderDesktop}`}
           >
-            {/* Circle Image */}
-            <div className="w-40 h-40 md:w-48 md:h-48 rounded-full overflow-hidden bg-zinc-300 mb-4 shrink-0">
+            {/* Circle Image enlarged */}
+            <div className="w-48 h-48 md:w-64 md:h-64 rounded-full overflow-hidden bg-zinc-300 mb-6 shadow-md ring-4 ring-[var(--primary)]/30">
               <img
                 src={member.imageSrc}
                 alt={member.name}
                 className="w-full h-full object-cover"
+                loading="lazy"
               />
             </div>
 
             {/* Name */}
             <p
-              className={`text-2xl md:text-3xl font-medium mb-1 whitespace-nowrap ${
+              className={`text-3xl md:text-4xl font-semibold mb-2 tracking-wide ${
                 darkMode ? "text-[var(--primary)]" : "text-[var(--primary)]"
               }`}
             >
@@ -91,15 +130,56 @@ export default function MeetTheTeam() {
 
             {/* Role */}
             <p
-              className={`text-lg md:text-xl font-normal whitespace-nowrap ${
+              className={`text-xl md:text-2xl font-medium mb-4 ${
                 darkMode ? "text-[var(--navbar)]" : "text-[var(--navbar)]"
               }`}
             >
               {member.role}
             </p>
+
+            {/* Bullet contributions */}
+            <ul className={`text-base md:text-lg space-y-2 text-left list-disc list-inside ${darkMode ? 'text-[var(--navbar)]' : 'text-[var(--navbar)]'} max-w-[95%]`}> 
+              {member.bullets.map((b) => (
+                <li key={b} className="leading-snug">{b}</li>
+              ))}
+            </ul>
           </motion.div>
         ))}
       </motion.div>
+
+      {/* Summary / Professional Text */}
+      <div className="mt-20 max-w-4xl mx-auto text-center px-4">
+        <h2 className={`text-4xl md:text-5xl font-bold mb-6 ${darkMode ? 'text-[var(--primary)]' : 'text-[var(--primary)]'}`}>What We Built</h2>
+        <p className={`text-lg md:text-xl leading-relaxed mb-10 ${darkMode ? 'text-[var(--navbar)]' : 'text-[var(--navbar)]'}`}>
+          Together we engineered MirAI: a plant-focused platform integrating real-time identification, health assessment, and personalized care guidance. Our collaboration spanned UX ideation, data modeling, API integration, secure authentication, and a responsive, theme-aware interface.
+        </p>
+        <div className="grid md:grid-cols-3 gap-8 text-left">
+          <div className="p-6 rounded-xl bg-white/40 dark:bg-white/10 backdrop-blur-sm border border-[var(--primary)]/30 shadow-sm">
+            <h3 className={`text-2xl font-semibold mb-3 ${darkMode ? 'text-[var(--primary)]' : 'text-[var(--primary)]'}`}>Frontend</h3>
+            <ul className={`list-disc list-inside space-y-2 text-base md:text-lg ${darkMode ? 'text-[var(--navbar)]' : 'text-[var(--navbar)]'}`}>
+              <li>Responsive React + TypeScript architecture</li>
+              <li>Dynamic theming & avatar system</li>
+              <li>Accessible navigation & layout</li>
+            </ul>
+          </div>
+          <div className="p-6 rounded-xl bg-white/40 dark:bg-white/10 backdrop-blur-sm border border-[var(--primary)]/30 shadow-sm">
+            <h3 className={`text-2xl font-semibold mb-3 ${darkMode ? 'text-[var(--primary)]' : 'text-[var(--primary)]'}`}>Backend</h3>
+            <ul className={`list-disc list-inside space-y-2 text-base md:text-lg ${darkMode ? 'text-[var(--navbar)]' : 'text-[var(--navbar)]'}`}>
+              <li>Supabase schema & secure auth</li>
+              <li>Plant.id API integration workflow</li>
+              <li>Data enrichment & health metrics</li>
+            </ul>
+          </div>
+          <div className="p-6 rounded-xl bg-white/40 dark:bg-white/10 backdrop-blur-sm border border-[var(--primary)]/30 shadow-sm">
+            <h3 className={`text-2xl font-semibold mb-3 ${darkMode ? 'text-[var(--primary)]' : 'text-[var(--primary)]'}`}>Product</h3>
+            <ul className={`list-disc list-inside space-y-2 text-base md:text-lg ${darkMode ? 'text-[var(--navbar)]' : 'text-[var(--navbar)]'}`}>
+              <li>Wireframing & UX iteration</li>
+              <li>Feature scoping & prioritization</li>
+              <li>Continuous feedback integration</li>
+            </ul>
+          </div>
+        </div>
+      </div>
 
       {/* Mobile-only footer */}
       <footer className="mt-30 mb-10 text-sm block md:hidden text-center">

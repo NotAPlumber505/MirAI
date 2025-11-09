@@ -1,5 +1,7 @@
 import { Link } from "react-router-dom";
 import { useTheme } from "../contexts/ThemeContext";
+import MirAI_Dark_Logo from "../assets/MirAI_Dark_Logo.png";
+import MirAI_light_Logo from "../assets/MirAI_light_Logo.png";
 
 export default function Navbar(props:any) {
   const { darkMode, toggleDarkMode } = useTheme();
@@ -22,9 +24,16 @@ export default function Navbar(props:any) {
     >
       <Link
         to="/"
-        className={`text-2xl md:text-3xl font-bold ${darkMode ? "text-[var(--background)]" : "text-[var(--primary)]"} ${logoHover}`}
+        className={`group flex items-center gap-3 ${logoHover}`}
       >
-        MirAI
+        <div className="relative flex items-center justify-center w-14 h-14 md:w-16 md:h-16 rounded-full overflow-hidden ring-2 ring-[var(--primary)]/30 shadow-sm transition-transform duration-300 group-hover:scale-110">
+          <img
+            src={darkMode ? MirAI_Dark_Logo : MirAI_light_Logo}
+            alt="MirAI Logo"
+            className="w-full h-full rounded-full aspect-square object-cover"
+          />
+        </div>
+        <span className={`text-2xl md:text-3xl font-bold font-[var(--font-logo)] ${darkMode ? "text-[var(--background)]" : "text-[var(--primary)]"} transition-transform duration-300 group-hover:scale-105`}>MirAI</span>
       </Link>
 
       <div className="flex flex-1 justify-center gap-8 md:gap-12 text-lg md:text-xl mx-16">

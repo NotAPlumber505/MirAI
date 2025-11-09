@@ -4,6 +4,8 @@ import { useNavigate, Link } from "react-router-dom";
 import { motion, useAnimation } from "framer-motion";
 import { useTheme } from "../contexts/ThemeContext";
 import { Eye, EyeOff } from "lucide-react";
+import MirAI_Dark_Logo from "../assets/MirAI_Dark_Logo.png";
+import MirAI_light_Logo from "../assets/MirAI_light_Logo.png";
 import googleIcon from "../assets/google-icon.svg";
 import { supabase } from "../supabaseClient";
 
@@ -130,6 +132,7 @@ export default function Login({ supabase }: { supabase: typeof import("../supaba
     new URL("../assets/plants/plant8.jpg", import.meta.url).href,
     new URL("../assets/plants/plant9.jpg", import.meta.url).href,
     new URL("../assets/plants/plant10.jpg", import.meta.url).href,
+    new URL("../assets/plants/plant11.jpg", import.meta.url).href,
   ];
 
   const handlePause = () => controls.stop();
@@ -146,12 +149,22 @@ export default function Login({ supabase }: { supabase: typeof import("../supaba
 
   return (
     <div className={`min-h-screen flex flex-col ${bgColor} ${textColor} transition-colors duration-300`}>
-      {/* Welcome Message */}
-      <div className="text-center mt-10 px-4">
-        <h2 className="text-3xl font-semibold mb-2 font-[var(--font-logo)]">
-          Welcome to MirAI 🌿
-        </h2>
-        <p className="text-lg opacity-90">
+      {/* Welcome Message with single logo instance */}
+      <div className="text-center mt-10 px-4 flex flex-col items-center">
+        <div className="flex items-center gap-4 mb-2 group">
+          <div className="relative flex items-center justify-center w-20 h-20 md:w-24 md:h-24 rounded-full overflow-hidden ring-2 ring-[var(--primary)]/30 shadow-sm transition-transform duration-300 group-hover:scale-110">
+            <img
+              src={darkMode ? MirAI_Dark_Logo : MirAI_light_Logo}
+              alt="MirAI Logo"
+              className="w-full h-full rounded-full aspect-square object-cover"
+              loading="lazy"
+            />
+          </div>
+          <h2 className="text-3xl md:text-4xl font-semibold font-[var(--font-logo)] leading-tight transition-transform duration-300 group-hover:scale-105">
+            Welcome to MirAI 🌿
+          </h2>
+        </div>
+        <p className="text-lg opacity-90 max-w-xl">
           Your AI-powered plant companion, here to help your garden thrive.
         </p>
       </div>
@@ -236,14 +249,15 @@ export default function Login({ supabase }: { supabase: typeof import("../supaba
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={handleGoogleSignIn}
-            className={`mt-4 w-full flex items-center gap-3 py-2 px-4 rounded-xl border font-medium transition-all duration-300 cursor-pointer ${
+            aria-label="Sign in with Google"
+            className={`mt-4 mx-auto w-[260px] sm:w-[280px] flex items-center justify-start gap-2 py-2 px-4 rounded-xl border font-medium transition-all duration-300 cursor-pointer ${
               darkMode
                 ? "border-gray-600 text-white hover:bg-[var(--navbar)] hover:text-[var(--background)]"
                 : "border-gray-600 text-[var(--primary)] hover:bg-gray-100 hover:text-[var(--primary-hover)]"
             }`}
           >
-            <img src={googleIcon} alt="Google" className="w-6 h-6 align-middle" />
-            <span className="text-base font-medium">Sign in with Google</span>
+            <img src={googleIcon} alt="Google" className="w-5 h-5" />
+            <span className="text-sm font-medium whitespace-nowrap leading-none">Sign in with Google</span>
           </motion.button>
 
           <p className="mt-6 text-center text-sm">

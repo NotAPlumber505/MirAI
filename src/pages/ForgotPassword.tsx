@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabaseClient";
 import { Mail } from "lucide-react";
+import { useTheme } from "../contexts/ThemeContext";
 
 interface ForgotPasswordProps {
   supabase: typeof supabase;
@@ -12,6 +13,7 @@ export default function ForgotPassword({ supabase }: ForgotPasswordProps) {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { darkMode } = useTheme();
 
   const handleForgotPassword = async () => {
     setMessage("");
@@ -23,7 +25,7 @@ export default function ForgotPassword({ supabase }: ForgotPasswordProps) {
 
     setLoading(true);
     try {
-      const redirectTo = `${window.location.origin}/reset-password?email=${encodeURIComponent(email)}`;
+  const redirectTo = `${window.location.origin}/reset-password?email=${encodeURIComponent(email)}&recovery=1`;
       const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
 
       if (error) throw error;
@@ -42,8 +44,8 @@ export default function ForgotPassword({ supabase }: ForgotPasswordProps) {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-6">
-      <div className="w-full max-w-md bg-white shadow-lg rounded-2xl p-8">
+    <div className={`min-h-screen flex flex-col items-center justify-center px-6 ${darkMode ? 'bg-[var(--background)]' : 'bg-[var(--background)]'}`}>
+      <div className={`w-full max-w-md shadow-lg rounded-2xl p-8 ${darkMode ? 'bg-[var(--navbar)] text-white' : 'bg-white text-[var(--navbar)]'}`}>
         <h1 className="text-2xl font-bold mb-6 text-center text-[var(--primary)]">
           Forgot Password
         </h1>
@@ -66,7 +68,11 @@ export default function ForgotPassword({ supabase }: ForgotPasswordProps) {
             placeholder="Enter your email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-4 py-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-[var(--primary)] pr-10"
+            className={`w-full px-4 py-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-[var(--primary)] pr-10 ${
+              darkMode 
+                ? 'bg-[#1f1f1f] text-white border-gray-600 placeholder-gray-400' 
+                : 'bg-white text-[var(--navbar)] border-gray-300 placeholder-gray-500'
+            }`}
           />
           <Mail
             size={20}
@@ -77,14 +83,22 @@ export default function ForgotPassword({ supabase }: ForgotPasswordProps) {
         <button
           onClick={handleForgotPassword}
           disabled={loading}
-          className="w-full py-3 rounded-xl font-semibold bg-[var(--primary)] text-white cursor-pointer hover:opacity-90 transition"
+          className={`w-full py-3 rounded-xl font-semibold cursor-pointer hover:opacity-90 transition ${
+            darkMode
+              ? 'bg-[var(--primary)] text-[var(--background)]'
+              : 'bg-[var(--primary)] text-white'
+          }`}
         >
           {loading ? "Sending..." : "Send Reset Link"}
         </button>
 
         <button
           onClick={() => navigate("/login")}
-          className="w-full mt-4 py-3 rounded-xl font-semibold text-[var(--primary)] border border-[var(--primary)] cursor-pointer hover:bg-[var(--primary)] hover:text-white transition"
+          className={`w-full mt-4 py-3 rounded-xl font-semibold border cursor-pointer transition ${
+            darkMode
+              ? 'text-[var(--primary)] border-[var(--primary)] hover:bg-[var(--primary)] hover:text-[var(--background)]'
+              : 'text-[var(--primary)] border-[var(--primary)] hover:bg-[var(--primary)] hover:text-white'
+          }`}
         >
           Back to Login
         </button>

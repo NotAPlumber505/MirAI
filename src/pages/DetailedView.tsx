@@ -15,20 +15,23 @@ const mockPlant: PlantDetails = {
   overall_health: "Good",
   last_scan_date: "2025-11-09",
   plant_information: {
-    kingdom: "Plantae",
-    phylum: "Tracheophyta",
-    class: "Magnoliopsida",
-    order: "Rosales",
-    family: "Rosaceae",
-    genus: "Plantae",
+    taxonomy: {
+      kingdom: "Plantae",
+      phylum: "Tracheophyta",
+      class: "Magnoliopsida",
+      order: "Rosales",
+      family: "Rosaceae",
+      genus: "Plantae"
+    },
     confidence: "95%",
     probability: "98%",
-    description: { value: "This is a mock plant description." }
+    description: "This is a mock plant description."
   },
   imageUrl: "https://placehold.co/400x300",
 };
 
 const mockHealth = {
+  is_plant: { binary: true, probability: 0.99 },
   is_healthy: { binary: true, probability: 0.95 },
   disease: { suggestions: [] },
 };
@@ -43,19 +46,46 @@ interface PlantDetails {
   species: string;
   overall_health: string;
   last_scan_date: string;
-  health_assesment?: any;
+  health_assesment?: {
+    suggestions?: Array<{
+      id?: string;
+      name: string;
+      probability: number;
+      similar_images?: SimilarImage[];
+      details?: {
+        description?: string;
+        url?: string;
+        common_names?: string[] | null;
+        language?: string;
+        entity_id?: string;
+      };
+      redundant?: boolean;
+    }>;
+    question?: any;
+  };
   plant_information?: {
-    kingdom?: string;
-    phylum?: string;
-    class?: string;
-    order?: string;
-    family?: string;
-    genus?: string;
+    // Taxonomy
+    taxonomy?: {
+      kingdom?: string;
+      phylum?: string;
+      class?: string;
+      order?: string;
+      family?: string;
+      genus?: string;
+    };
+    // Basic info
     confidence?: string;
     probability?: string;
-    description?: {
-      value: string;
-    };
+    description?: string;
+    url?: string;
+    common_names?: string[];
+    // Care info
+    edible_parts?: string[] | null;
+    watering?: {
+      min?: number;
+      max?: number;
+    } | null;
+    propagation_methods?: string[] | null;
   };
   imageUrl?: string; // This will be generated from plant_path
 }
@@ -74,7 +104,14 @@ interface DiseaseSuggestion {
   name: string;
   probability: number;
   similar_images?: SimilarImage[];
-  details?: { language?: string; entity_id?: string };
+  details?: {
+    description?: string;
+    url?: string;
+    common_names?: string[] | null;
+    language?: string;
+    entity_id?: string;
+  };
+  redundant?: boolean;
 }
 
 interface HealthResult {
@@ -133,13 +170,12 @@ export default function DetailedView() {
 
             setPlant(data);
 
-            // Use stored health assessment if available, otherwise try Plant.id API
-            if (data.health_assesment) {
+            // Use stored health assessment from database
+            if (data.health_assesment && data.health_assesment.suggestions) {
               setHealth(data.health_assesment);
-            } else if (data.imageUrl && import.meta.env.VITE_PLANT_ID_KEY) {
-              fetchHealth(data.imageUrl);
             } else {
-              setHealth(mockHealth);
+              // No health data available
+              setHealth(null);
             }
           }
         }
@@ -148,29 +184,6 @@ export default function DetailedView() {
         setError("An unexpected error occurred.");
       } finally {
         setLoading(false);
-      }
-    }
-
-    async function fetchHealth(imageUrl: string) {
-      try {
-        const response = await fetch("https://api.plant.id/v3/health_assessment", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Api-Key": import.meta.env.VITE_PLANT_ID_KEY!,
-          },
-          body: JSON.stringify({
-            images: [imageUrl],
-            organ: "leaf",
-            disease_details: true,
-          }),
-        });
-
-        const data = await response.json();
-        setHealth(data);
-      } catch (err) {
-        console.error(err);
-        setHealth(mockHealth); // fallback
       }
     }
 
@@ -188,7 +201,7 @@ export default function DetailedView() {
   if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-red-500">{error}</p>
+        <p className="text-[var(--danger)]">{error}</p>
       </div>
     );
   }
@@ -237,62 +250,126 @@ export default function DetailedView() {
 
       {/* Description */}
       <motion.p
-        className="max-w-3xl mx-auto text-center md:text-left text-sm md:text-base mb-6"
+        className="max-w-3xl mx-auto text-center md:text-left text-sm md:text-base mb-3"
         initial="hidden"
         animate="visible"
         variants={textVariant}
       >
-        {plant.plant_information?.description?.value}
+        {plant.plant_information?.description || `${plant.plant_name} - No description available.`}
       </motion.p>
 
+      {/* Wikipedia Link */}
+      {plant.plant_information?.url && (
+        <motion.div 
+          className="max-w-3xl mx-auto text-center md:text-left mb-6"
+          initial="hidden"
+          animate="visible"
+          variants={textVariant}
+        >
+          <a 
+            href={plant.plant_information.url} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-[var(--primary)] hover:underline inline-flex items-center gap-1"
+          >
+            📖 Learn more on Wikipedia →
+          </a>
+        </motion.div>
+      )}
+
+      {/* Common Names */}
+      {plant.plant_information?.common_names && plant.plant_information.common_names.length > 0 && (
+        <motion.div className="max-w-4xl mx-auto mb-6" initial="hidden" animate="visible" variants={textVariant}>
+          <h2 className="text-2xl md:text-3xl font-semibold mb-3 text-center md:text-left">🌸 Common Names</h2>
+          <p className="text-sm md:text-base">{plant.plant_information.common_names.filter(n => n !== "No common names available").join(", ")}</p>
+        </motion.div>
+      )}
+
       {/* Scientific Classification */}
-      <motion.div className="max-w-4xl mx-auto mb-6" initial="hidden" animate="visible" variants={textVariant}>
-        <h2 className="text-2xl md:text-3xl font-semibold mb-3 text-center md:text-left">🔬 Scientific Classification</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-left text-sm md:text-base">
-          {plant.plant_information?.kingdom && <p><strong>Kingdom:</strong> {plant.plant_information?.kingdom}</p>}
-          {plant.plant_information?.phylum && <p><strong>Phylum:</strong> {plant.plant_information?.phylum}</p>}
-          {plant.plant_information?.class && <p><strong>Class:</strong> {plant.plant_information?.class}</p>}
-          {plant.plant_information?.order && <p><strong>Order:</strong> {plant.plant_information?.order}</p>}
-          {plant.plant_information?.family && <p><strong>Family:</strong> {plant.plant_information?.family}</p>}
-          {plant.plant_information?.genus && <p><strong>Genus:</strong> {plant.plant_information?.genus}</p>}
-        </div>
-      </motion.div>
+      {plant.plant_information?.taxonomy && (
+        <motion.div className="max-w-4xl mx-auto mb-6" initial="hidden" animate="visible" variants={textVariant}>
+          <h2 className="text-2xl md:text-3xl font-semibold mb-3 text-center md:text-left">🔬 Scientific Classification</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-left text-sm md:text-base">
+            {plant.plant_information.taxonomy.kingdom && <p><strong>Kingdom:</strong> {plant.plant_information.taxonomy.kingdom}</p>}
+            {plant.plant_information.taxonomy.phylum && <p><strong>Phylum:</strong> {plant.plant_information.taxonomy.phylum}</p>}
+            {plant.plant_information.taxonomy.class && <p><strong>Class:</strong> {plant.plant_information.taxonomy.class}</p>}
+            {plant.plant_information.taxonomy.order && <p><strong>Order:</strong> {plant.plant_information.taxonomy.order}</p>}
+            {plant.plant_information.taxonomy.family && <p><strong>Family:</strong> {plant.plant_information.taxonomy.family}</p>}
+            {plant.plant_information.taxonomy.genus && <p><strong>Genus:</strong> {plant.plant_information.taxonomy.genus}</p>}
+          </div>
+        </motion.div>
+      )}
+
+      {/* Care Information */}
+      {(plant.plant_information?.edible_parts || plant.plant_information?.watering || plant.plant_information?.propagation_methods) && (
+        <motion.div className="max-w-4xl mx-auto mb-6" initial="hidden" animate="visible" variants={textVariant}>
+          <h2 className="text-2xl md:text-3xl font-semibold mb-3 text-center md:text-left">🌿 Care Information</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-left text-sm md:text-base">
+            {plant.plant_information.edible_parts && plant.plant_information.edible_parts.length > 0 && (
+              <p><strong>Edible Parts:</strong> {plant.plant_information.edible_parts.join(", ")}</p>
+            )}
+            {plant.plant_information.watering && (
+              <p><strong>Watering Level:</strong> {plant.plant_information.watering.min} - {plant.plant_information.watering.max}</p>
+            )}
+            {plant.plant_information.propagation_methods && plant.plant_information.propagation_methods.length > 0 && (
+              <p><strong>Propagation:</strong> {plant.plant_information.propagation_methods.join(", ")}</p>
+            )}
+          </div>
+        </motion.div>
+      )}
 
       {/* Health Assessment */}
       {health && (
         <motion.div className="max-w-4xl mx-auto mb-6" initial="hidden" animate="visible" variants={textVariant}>
           <h2 className="text-2xl md:text-3xl font-semibold mb-3 text-center md:text-left">🩺 Health Assessment</h2>
 
-          <p className="mb-2 text-sm md:text-base">
-            Overall Health: {health.is_healthy?.binary ? "Healthy" : "Unhealthy"}{" "}
+          <p className="mb-4 text-sm md:text-base">
+            <strong>Overall Health:</strong>{" "}
+            <span className={health.is_healthy?.binary ? "text-[var(--success)]" : "text-[var(--secondary)]"}>
+              {health.is_healthy?.binary ? "Healthy" : "Needs Attention"}
+            </span>
             {health.is_healthy?.probability !== undefined && (
-              <span>({Math.round((health.is_healthy.probability || 0) * 100)}%)</span>
+              <span> ({Math.round((health.is_healthy.probability || 0) * 100)}% confidence)</span>
             )}
           </p>
 
+          {health.is_plant && (
+            <p className="mb-4 text-sm md:text-base">
+              <strong>Plant Probability:</strong>{" "}
+              <span className={health.is_plant.binary ? "text-[var(--success)]" : "text-[var(--danger)]"}>
+                {Math.round((health.is_plant.probability || 0) * 100)}%
+              </span>
+              {health.is_plant.binary ? " - Confirmed as plant" : " - May not be a plant"}
+            </p>
+          )}
+
+          <p className="mb-4 text-sm md:text-base">
+            <strong>Last Scan:</strong> {new Date(plant.last_scan_date).toLocaleDateString()}
+          </p>
+
           {health.question && (
-            <div className="mb-4">
-              <p className="font-medium mb-2">{health.question.text}</p>
+            <div className="mb-6 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg">
+              <p className="font-medium mb-3">{health.question.text}</p>
               <div className="flex gap-3 mb-2">
                 <button
                   onClick={() => setSelectedAnswer("yes")}
-                  className={`px-4 py-2 rounded-md text-sm text-white cursor-pointer ${
-                    selectedAnswer === "yes" ? "bg-[var(--primary)]" : "bg-[var(--primary-hover)]"
+                  className={`px-4 py-2 rounded-md text-sm text-white cursor-pointer transition ${
+                    selectedAnswer === "yes" ? "bg-[var(--primary)]" : "bg-[var(--primary-hover)] hover:bg-[var(--primary)]"
                   }`}
                 >
                   {health.question.options.yes.translation}
                 </button>
                 <button
                   onClick={() => setSelectedAnswer("no")}
-                  className={`px-4 py-2 rounded-md text-sm text-white cursor-pointer ${
-                    selectedAnswer === "no" ? "bg-[var(--primary)]" : "bg-[var(--primary-hover)]"
+                  className={`px-4 py-2 rounded-md text-sm text-white cursor-pointer transition ${
+                    selectedAnswer === "no" ? "bg-[var(--primary)]" : "bg-[var(--primary-hover)] hover:bg-[var(--primary)]"
                   }`}
                 >
                   {health.question.options.no.translation}
                 </button>
               </div>
               {selectedAnswer && (
-                <p className="text-sm italic text-[var(--navbar)]">
+                <p className="text-sm italic text-gray-700 dark:text-gray-300 mt-2">
                   {selectedAnswer === "yes"
                     ? "Based on your answer, water excess or uneven watering is more likely."
                     : "Based on your answer, nutrient deficiency is more likely."}
@@ -301,27 +378,72 @@ export default function DetailedView() {
             </div>
           )}
 
-          {health.disease?.suggestions && (
+          {health.disease?.suggestions && health.disease.suggestions.length > 0 ? (
             <div className="mt-4">
-              <h3 className="text-xl font-semibold mb-3">Diseases</h3>
+              <h3 className="text-xl font-semibold mb-4">Health Suggestions</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {health.disease.suggestions.map((d, idx) => (
-                  <div key={d.id ?? idx} className="border rounded-lg p-3 flex flex-col items-center">
-                    <p className="font-semibold text-lg mb-1">{d.name} ({Math.round(d.probability * 100)}%)</p>
-                    <p className="text-sm mb-2 text-gray-600">Cause: {d.name}</p>
-                    <div className="flex gap-2 overflow-x-auto w-full p-1">
-                      {d.similar_images?.map((img) => (
-                        <img
-                          key={img.id}
-                          src={img.url}
-                          alt={d.name}
-                          className="w-32 h-32 md:w-40 md:h-40 object-contain rounded border flex-shrink-0"
-                        />
-                      ))}
+                {health.disease.suggestions
+                  .filter((d) => !d.redundant) // Filter out redundant suggestions
+                  .slice(0, 6) // Show top 6 suggestions
+                  .map((d, idx) => (
+                    <div key={d.id ?? idx} className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800 dark:border-gray-700">
+                      <p className="font-semibold text-lg mb-2">
+                        {d.name}{" "}
+                        <span className="text-sm font-normal text-gray-600 dark:text-gray-400">
+                          ({Math.round(d.probability * 100)}%)
+                        </span>
+                      </p>
+                      
+                      {d.details?.description && (
+                        <p className="text-sm text-gray-700 dark:text-gray-300 mb-3 leading-relaxed">
+                          {d.details.description}
+                        </p>
+                      )}
+                      
+                      {d.details?.common_names && d.details.common_names.length > 0 && (
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                          <strong>Also known as:</strong> {d.details.common_names.join(", ")}
+                        </p>
+                      )}
+                      
+                      {d.details?.url && (
+                        <a 
+                          href={d.details.url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-[var(--primary)] hover:underline text-sm block mb-3"
+                        >
+                          Learn more →
+                        </a>
+                      )}
+                      
+                      {d.similar_images && d.similar_images.length > 0 && (
+                        <div className="mt-3">
+                          <p className="text-xs font-semibold mb-2 text-gray-600 dark:text-gray-400">Similar Images:</p>
+                          <div className="flex gap-2 overflow-x-auto pb-2">
+                            {d.similar_images.slice(0, 3).map((img) => (
+                              <img
+                                key={img.id}
+                                src={img.url_small || img.url}
+                                alt={d.name}
+                                className="w-20 h-20 md:w-24 md:h-24 object-cover rounded border flex-shrink-0"
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  </div>
-                ))}
+                  ))}
               </div>
+            </div>
+          ) : (
+            <div className="text-center p-6 rounded-lg bg-[var(--success)]/10 border-2 border-[var(--success)]">
+              <p className="text-[var(--success)] font-semibold text-lg mb-2">
+                ✅ No health issues detected!
+              </p>
+              <p className="text-sm">
+                Your plant appears to be healthy. Continue with regular care and monitoring.
+              </p>
             </div>
           )}
         </motion.div>
