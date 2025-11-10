@@ -3,7 +3,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://your-backend-url.railway.app/:path*"
+      "destination": "https://mirai-production-4610.up.railway.app/:path*"
     }
   ],
   "headers": [
@@ -18,8 +18,8 @@
     }
   ],
   "env": {
-    "VITE_SUPABASE_URL": "@vite-supabase-url",
-    "VITE_SUPABASE_KEY": "@vite-supabase-key"
+    "VITE_SUPABASE_URL": "https://zgwcqmepweybnvezlqsd.supabase.co",
+    "VITE_SUPABASE_KEY": "${VITE_SUPABASE_KEY}"
   },
   "build": {
     "env": {
