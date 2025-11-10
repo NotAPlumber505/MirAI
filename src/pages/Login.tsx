@@ -75,9 +75,24 @@ export default function Login({ supabase }: { supabase: typeof import("../supaba
     setLoading(true);
     try {
       if (isRegistering) {
-        const { error } = await supabase.auth.signUp({ email, password });
+        const { data, error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
-        await supabase.from("users").insert({ email, username });
+        
+        // Only insert user data if signup was successful and we have a user
+        if (data.user) {
+          const { error: insertError } = await supabase
+            .from("users")
+            .insert({ 
+              id: data.user.id,
+              email, 
+              username: username || null 
+            });
+          
+          if (insertError) {
+            console.error("Error creating user profile:", insertError);
+            // Don't throw here - user is already created in auth.users
+          }
+        }
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;

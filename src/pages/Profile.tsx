@@ -148,9 +148,23 @@ export default function Profile({ supabase, isLoggedIn }: any) {
   }, [isLoggedIn]);
 
   async function logout() {
-    const { error } = await supabase.auth.signOut();
-    if (error) console.log("Supabase error!", error);
-    else navigate("/");
+    try {
+      // Check if there's an active session first
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session) {
+        // Only attempt signOut if there's an active session
+        const { error } = await supabase.auth.signOut();
+        if (error) console.error("Supabase signOut error:", error);
+      }
+      
+      // Navigate to home regardless of signOut result
+      navigate("/login");
+    } catch (error) {
+      console.error("Logout error:", error);
+      // Navigate even if there's an error
+      navigate("/login");
+    }
   }
 
   async function deletePlant(indexToDelete: number) {
