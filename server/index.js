@@ -19,34 +19,73 @@ Then restart the server.`);
   }
 }
 
-// Node 18+ provides global fetch. On modern Node (your environment is >=18) this should be available.
-// If you run on an older Node runtime, install node-fetch and adapt this file to import it.
+// CORS configuration for local development and production
+const allowedOrigins = [
+  'http://localhost:5173',           // Vite dev server
+  'http://127.0.0.1:5173',           // Alternative localhost
+  'http://localhost:5174',           // Alternative Vite port
+  'https://mir-ai.vercel.app',       // Production Vercel URL (without trailing slash)
+  'https://mirai.vercel.app',        // Alternative production URL
+];
 
-app.use(cors({ origin: true }));
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps, Postman, or curl)
+    if (!origin) return callback(null, true);
+    
+    // Check if origin is in allowed list or matches Vercel preview deployments
+    const isAllowed = allowedOrigins.includes(origin) || 
+                      origin?.includes('.vercel.app') ||
+                      origin?.includes('localhost');
+    
+    if (isAllowed) {
+      callback(null, true);
+    } else {
+      console.warn(`CORS: Blocked origin: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true
+}));
+
 app.use(express.json({ limit: '15mb' }));
 
-// Helper: ensure images in the forwarded body are data URLs.
-// If an image string looks like raw base64 (no leading "data:" or http(s)://),
-// we prepend a sensible default data URL prefix. This keeps clients that send
-// raw base64 working without changing client code.
+// Helper: ensure images in the forwarded body are valid for Plant.id API.
+// Plant.id accepts:
+// 1. URLs starting with http:// or https://
+// 2. Base64 data URLs in format: data:image/[jpeg|png|...];base64,<base64-string>
+// The client (Scan.tsx) already sends properly formatted data URLs, so we just validate them.
 function prepareForwardBody(body) {
   try {
     if (!body || !Array.isArray(body.images)) return body;
-    let transformed = false;
-    const images = body.images.map((img) => {
-      if (typeof img !== 'string') return img;
-      // If already a data URL or an external URL, leave it alone
-      if (/^data:/.test(img) || /^https?:\/\//.test(img)) return img;
-      // If it looks like base64 (common charset), prepend a default JPEG data URL.
+    
+    const images = body.images.map((img, index) => {
+      if (typeof img !== 'string') {
+        console.warn(`Image ${index} is not a string, skipping validation`);
+        return img;
+      }
+      
+      // Check if it's a URL (http:// or https://)
+      if (/^https?:\/\//.test(img)) {
+        return img;
+      }
+      
+      // Check if it's a proper data URL (data:image/...;base64,...)
+      if (/^data:image\/[a-z]+;base64,/.test(img)) {
+        return img;
+      }
+      
+      // If it's raw base64 without the data URL prefix, add it
       if (/^[A-Za-z0-9+/=\s]+$/.test(img)) {
-        transformed = true;
+        console.log(`Image ${index}: Adding data URL prefix to raw base64 string`);
         return 'data:image/jpeg;base64,' + img.trim();
       }
-      // Otherwise leave as-is
+      
+      // If we get here, the format is unexpected
+      console.warn(`Image ${index}: Unexpected format, passing through as-is`);
       return img;
     });
-    if (!transformed) return body;
-    console.log('prepareForwardBody: prepended data URL to images (assumed image/jpeg).');
+    
     return { ...body, images };
   } catch (e) {
     console.warn('prepareForwardBody failed, forwarding original body', e);
@@ -82,7 +121,19 @@ app.post('/identify', async (req, res) => {
     }
 
     const forwardBody = prepareForwardBody(req.body);
-    console.log('Forwarding to Plant.id with body:', JSON.stringify(forwardBody, null, 2));
+    
+    // Log the request we're sending to Plant.id (truncate image data for readability)
+    const logBody = {
+      ...forwardBody,
+      images: forwardBody.images?.map((img, i) => {
+        if (typeof img === 'string') {
+          const preview = img.substring(0, 100);
+          return `Image ${i}: ${preview}... (length: ${img.length})`;
+        }
+        return img;
+      })
+    };
+    console.log('Forwarding to Plant.id with body:', JSON.stringify(logBody, null, 2));
     console.log('Using API key length:', apiKey ? apiKey.length : 0);
 
     const fetchResponse = await fetch(plantIdUrl, {
@@ -241,6 +292,119 @@ app.get('/api/plant-search', async (req, res) => {
   }
 });
 
+// Add non-/api alias for plant-search
+app.get('/plant-search', async (req, res) => {
+  try {
+    const apiKey = process.env.PLANT_ID_API_KEY;
+    if (!apiKey) {
+      console.error('PLANT_ID_API_KEY not set');
+      return res.status(500).json({ error: 'Server missing PLANT_ID_API_KEY' });
+    }
+
+    const query = req.query.q;
+    if (!query) {
+      return res.status(400).json({ error: 'Query parameter "q" is required' });
+    }
+
+    const limit = req.query.limit || 10;
+    const language = req.query.language || 'en';
+    
+    const plantIdUrl = `https://plant.id/api/v3/kb/plants/name_search?q=${encodeURIComponent(query)}&limit=${limit}&language=${language}`;
+
+    console.log(`\n=== Plant Search Request (non-api route) ===`);
+    console.log(`Query: ${query}`);
+    console.log(`URL: ${plantIdUrl}`);
+
+    const fetchResponse = await fetch(plantIdUrl, {
+      method: 'GET',
+      headers: {
+        'Api-Key': apiKey,
+      },
+    });
+
+    const responseText = await fetchResponse.text();
+    console.log('Plant search response status:', fetchResponse.status);
+    console.log('Plant search response:', responseText.slice(0, 500));
+
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch (parseErr) {
+      console.error('Failed to parse JSON from plant search:', parseErr);
+      return res.status(502).json({ error: 'Invalid response from Plant.id', body: responseText.slice(0, 1000) });
+    }
+
+    if (!fetchResponse.ok) {
+      console.error('Plant.id search returned error:', fetchResponse.status, data);
+      return res.status(fetchResponse.status).json(data);
+    }
+
+    console.log('Plant search successful, found', data.entities?.length || 0, 'results');
+    return res.json(data);
+  } catch (err) {
+    console.error('Error in /plant-search:', err);
+    return res.status(500).json({ error: 'Internal server error', detail: err?.message || String(err) });
+  }
+});
+
+// Add non-/api alias for plant-details
+app.get('/plant-details/:access_token', async (req, res) => {
+  try {
+    const apiKey = process.env.PLANT_ID_API_KEY;
+    if (!apiKey) {
+      console.error('PLANT_ID_API_KEY not set');
+      return res.status(500).json({ error: 'Server missing PLANT_ID_API_KEY' });
+    }
+
+    const { access_token } = req.params;
+    if (!access_token) {
+      return res.status(400).json({ error: 'access_token is required' });
+    }
+
+    console.log(`\n=== Plant Details Request (non-api route) ===`);
+    console.log(`Access Token: ${access_token}`);
+
+    // Request all available plant details
+    const details = 'common_names,url,description,taxonomy,rank,gbif_id,inaturalist_id,image,synonyms,edible_parts,watering,propagation_methods';
+    const language = req.query.language || 'en';
+    
+    const plantIdUrl = `https://plant.id/api/v3/kb/plants/${access_token}?details=${details}&language=${language}`;
+
+    console.log(`Fetching plant details from: ${plantIdUrl}`);
+
+    const fetchResponse = await fetch(plantIdUrl, {
+      method: 'GET',
+      headers: {
+        'Api-Key': apiKey,
+      },
+    });
+
+    const responseText = await fetchResponse.text();
+    console.log('Plant details response status:', fetchResponse.status);
+    console.log('Plant details response:', responseText);
+
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch (parseErr) {
+      console.error('Failed to parse JSON from Plant.id plant details:', parseErr);
+      console.error('Raw response:', responseText);
+      return res.status(502).json({ error: 'Invalid response from Plant.id', body: responseText.slice(0, 1000) });
+    }
+
+    if (!fetchResponse.ok) {
+      console.error('Plant.id returned error:', fetchResponse.status, data);
+      return res.status(fetchResponse.status).json(data);
+    }
+
+    console.log('Successfully fetched plant details');
+    return res.json(data);
+  } catch (err) {
+    console.error('Error in /plant-details:', err);
+    return res.status(500).json({ error: 'Internal server error', detail: err?.message || String(err) });
+  }
+});
+
 // Get detailed plant information using access_token from plant search
 app.get('/api/plant-details/:access_token', async (req, res) => {
   try {
@@ -299,15 +463,135 @@ app.get('/api/plant-details/:access_token', async (req, res) => {
   }
 });
 
+// Get full identification details using access_token from identification response
+app.get('/api/identification-details/:access_token', async (req, res) => {
+  try {
+    const apiKey = process.env.PLANT_ID_API_KEY;
+    if (!apiKey) {
+      console.error('PLANT_ID_API_KEY not set');
+      return res.status(500).json({ error: 'Server missing PLANT_ID_API_KEY' });
+    }
+
+    const { access_token } = req.params;
+    if (!access_token) {
+      return res.status(400).json({ error: 'access_token is required' });
+    }
+
+    console.log(`\n=== Identification Details Request ===`);
+    console.log(`Access Token: ${access_token}`);
+
+    // Request all available identification details including taxonomy
+    const details = 'common_names,url,description,taxonomy,rank,gbif_id,synonyms';
+    const language = req.query.language || 'en';
+    
+    const plantIdUrl = `https://plant.id/api/v3/identification/${access_token}?details=${details}&language=${language}`;
+
+    console.log(`Fetching identification details from: ${plantIdUrl}`);
+
+    const fetchResponse = await fetch(plantIdUrl, {
+      method: 'GET',
+      headers: {
+        'Api-Key': apiKey,
+      },
+    });
+
+    const responseText = await fetchResponse.text();
+    console.log('Identification details response status:', fetchResponse.status);
+    console.log('Identification details response (first 1000 chars):', responseText.slice(0, 1000));
+
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch (parseErr) {
+      console.error('Failed to parse JSON from Plant.id identification details:', parseErr);
+      console.error('Raw response:', responseText.slice(0, 1000));
+      return res.status(502).json({ error: 'Invalid response from Plant.id', body: responseText.slice(0, 1000) });
+    }
+
+    if (!fetchResponse.ok) {
+      console.error('Plant.id returned error:', fetchResponse.status, data);
+      return res.status(fetchResponse.status).json(data);
+    }
+
+    console.log('Successfully fetched identification details');
+    return res.json(data);
+  } catch (err) {
+    console.error('Error in /api/identification-details:', err);
+    return res.status(500).json({ error: 'Internal server error', detail: err?.message || String(err) });
+  }
+});
+
+// Add non-/api alias for direct calls
+app.get('/identification-details/:access_token', async (req, res) => {
+  try {
+    const apiKey = process.env.PLANT_ID_API_KEY;
+    if (!apiKey) {
+      console.error('PLANT_ID_API_KEY not set');
+      return res.status(500).json({ error: 'Server missing PLANT_ID_API_KEY' });
+    }
+
+    const { access_token } = req.params;
+    if (!access_token) {
+      return res.status(400).json({ error: 'access_token is required' });
+    }
+
+    console.log(`\n=== Identification Details Request (non-api route) ===`);
+    console.log(`Access Token: ${access_token}`);
+
+    // Request all available identification details including taxonomy
+    const details = 'common_names,url,description,taxonomy,rank,gbif_id,synonyms';
+    const language = req.query.language || 'en';
+    
+    const plantIdUrl = `https://plant.id/api/v3/identification/${access_token}?details=${details}&language=${language}`;
+
+    console.log(`Fetching identification details from: ${plantIdUrl}`);
+
+    const fetchResponse = await fetch(plantIdUrl, {
+      method: 'GET',
+      headers: {
+        'Api-Key': apiKey,
+      },
+    });
+
+    const responseText = await fetchResponse.text();
+    console.log('Identification details response status:', fetchResponse.status);
+    console.log('Identification details response (first 1000 chars):', responseText.slice(0, 1000));
+
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch (parseErr) {
+      console.error('Failed to parse JSON from Plant.id identification details:', parseErr);
+      console.error('Raw response:', responseText.slice(0, 1000));
+      return res.status(502).json({ error: 'Invalid response from Plant.id', body: responseText.slice(0, 1000) });
+    }
+
+    if (!fetchResponse.ok) {
+      console.error('Plant.id returned error:', fetchResponse.status, data);
+      return res.status(fetchResponse.status).json(data);
+    }
+
+    console.log('Successfully fetched identification details');
+    return res.json(data);
+  } catch (err) {
+    console.error('Error in /identification-details:', err);
+    return res.status(500).json({ error: 'Internal server error', detail: err?.message || String(err) });
+  }
+});
+
 app.post('/health', async (req, res) => {
   try {
     const apiKey = process.env.PLANT_ID_API_KEY;
     if (!apiKey) return res.status(500).json({ error: 'Server missing PLANT_ID_API_KEY' });
 
-    // Only use supported details parameters for health assessment
-    const plantIdUrl = 'https://plant.id/api/v3/health_assessment?details=local_name,description,url,treatment,common_names,cause';
-    const forwardBody = prepareForwardBody(req.body);
+    // Health assessment POST endpoint - details go in URL query string
+    const plantIdUrl = 'https://plant.id/api/v3/health_assessment?details=local_name,description,url,treatment,classification,common_names,cause';
+    const forwardBody = {
+      ...prepareForwardBody(req.body),
+      similar_images: true
+    };
     
+    console.log('Health assessment request URL:', plantIdUrl);
     console.log('Health assessment request body:', JSON.stringify(forwardBody, null, 2));
     
     const fetchResponse = await fetch(plantIdUrl, {
@@ -350,8 +634,12 @@ app.post('/api/health', async (req, res) => {
     const apiKey = process.env.PLANT_ID_API_KEY;
     if (!apiKey) return res.status(500).json({ error: 'Server missing PLANT_ID_API_KEY' });
 
-    const plantIdUrl = 'https://plant.id/api/v3/health_assessment?details=local_name,description,url,treatment,common_names,cause';
-    const forwardBody = prepareForwardBody(req.body);
+    // Health assessment POST endpoint - details go in URL query string
+    const plantIdUrl = 'https://plant.id/api/v3/health_assessment?details=local_name,description,url,treatment,classification,common_names,cause';
+    const forwardBody = {
+      ...prepareForwardBody(req.body),
+      similar_images: true
+    };
     
     const fetchResponse = await fetch(plantIdUrl, {
       method: 'POST',
@@ -397,6 +685,21 @@ app.post('/debug/echo', (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`Plant.id proxy listening on port ${PORT}`);
+});
+
+server.on('error', (err) => {
+  console.error('Server error:', err);
+  process.exit(1);
+});
+
+// Handle unhandled promise rejections
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err);
+  process.exit(1);
 });

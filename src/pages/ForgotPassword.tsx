@@ -25,7 +25,9 @@ export default function ForgotPassword({ supabase }: ForgotPasswordProps) {
 
     setLoading(true);
     try {
-  const redirectTo = `${window.location.origin}/reset-password?email=${encodeURIComponent(email)}&recovery=1`;
+      // Supabase will add the recovery token as a hash fragment (#access_token=...)
+      // The redirect URL should just be the reset-password page without extra params
+      const redirectTo = `${window.location.origin}/reset-password`;
       const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
 
       if (error) throw error;
@@ -83,21 +85,21 @@ export default function ForgotPassword({ supabase }: ForgotPasswordProps) {
         <button
           onClick={handleForgotPassword}
           disabled={loading}
-          className={`w-full py-3 rounded-xl font-semibold cursor-pointer hover:opacity-90 transition ${
+          className={`w-full py-3 rounded-xl font-semibold cursor-pointer transition-all duration-200 ${
             darkMode
-              ? 'bg-[var(--primary)] text-[var(--background)]'
-              : 'bg-[var(--primary)] text-white'
-          }`}
+              ? 'bg-[var(--primary)] text-[var(--background)] hover:bg-[var(--primary-hover)] active:scale-95'
+              : 'bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] active:scale-95'
+          } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
           {loading ? "Sending..." : "Send Reset Link"}
         </button>
 
         <button
           onClick={() => navigate("/login")}
-          className={`w-full mt-4 py-3 rounded-xl font-semibold border cursor-pointer transition ${
+          className={`w-full mt-4 py-3 rounded-xl font-semibold border cursor-pointer transition-all duration-200 ${
             darkMode
-              ? 'text-[var(--primary)] border-[var(--primary)] hover:bg-[var(--primary)] hover:text-[var(--background)]'
-              : 'text-[var(--primary)] border-[var(--primary)] hover:bg-[var(--primary)] hover:text-white'
+              ? 'text-[var(--primary)] border-[var(--primary)] hover:bg-[var(--primary)] hover:text-[var(--background)] active:scale-95'
+              : 'text-[var(--primary)] border-[var(--primary)] hover:bg-[var(--primary)] hover:text-white active:scale-95'
           }`}
         >
           Back to Login

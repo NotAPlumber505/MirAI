@@ -47,20 +47,32 @@ interface PlantDetails {
   overall_health: string;
   last_scan_date: string;
   health_assesment?: {
-    suggestions?: Array<{
-      id?: string;
-      name: string;
-      probability: number;
-      similar_images?: SimilarImage[];
-      details?: {
-        description?: string;
-        url?: string;
-        common_names?: string[] | null;
-        language?: string;
-        entity_id?: string;
-      };
-      redundant?: boolean;
-    }>;
+    is_healthy?: {
+      binary?: boolean;
+      threshold?: number;
+      probability?: number;
+    };
+    is_plant?: {
+      probability?: number;
+      threshold?: number;
+      binary?: boolean;
+    };
+    disease?: {
+      suggestions?: Array<{
+        id?: string;
+        name: string;
+        probability: number;
+        similar_images?: SimilarImage[];
+        details?: {
+          description?: string;
+          url?: string;
+          common_names?: string[] | null;
+          language?: string;
+          entity_id?: string;
+        };
+        redundant?: boolean;
+      }>;
+    };
     question?: any;
   };
   plant_information?: {
@@ -76,7 +88,7 @@ interface PlantDetails {
     // Basic info
     confidence?: string;
     probability?: string;
-    description?: string;
+    description?: string | { value: string; citation?: string; license_name?: string; license_url?: string };
     url?: string;
     common_names?: string[];
     // Care info
@@ -169,9 +181,15 @@ export default function DetailedView() {
             }
 
             setPlant(data);
+            
+            // Debug: Log the plant data to see what we're getting
+            console.log("Plant data from database:", data);
+            console.log("Plant information:", data.plant_information);
+            console.log("Taxonomy:", data.plant_information?.taxonomy);
+            console.log("Common names:", data.plant_information?.common_names);
 
             // Use stored health assessment from database
-            if (data.health_assesment && data.health_assesment.suggestions) {
+            if (data.health_assesment) {
               setHealth(data.health_assesment);
             } else {
               // No health data available
@@ -255,7 +273,12 @@ export default function DetailedView() {
         animate="visible"
         variants={textVariant}
       >
-        {plant.plant_information?.description || `${plant.plant_name} - No description available.`}
+        {(() => {
+          const desc = plant.plant_information?.description;
+          if (!desc) return `${plant.plant_name} - No description available.`;
+          if (typeof desc === 'string') return desc;
+          return desc.value || `${plant.plant_name} - No description available.`;
+        })()}
       </motion.p>
 
       {/* Wikipedia Link */}
@@ -281,7 +304,11 @@ export default function DetailedView() {
       {plant.plant_information?.common_names && plant.plant_information.common_names.length > 0 && (
         <motion.div className="max-w-4xl mx-auto mb-6" initial="hidden" animate="visible" variants={textVariant}>
           <h2 className="text-2xl md:text-3xl font-semibold mb-3 text-center md:text-left">🌸 Common Names</h2>
-          <p className="text-sm md:text-base">{plant.plant_information.common_names.filter(n => n !== "No common names available").join(", ")}</p>
+          <p className="text-sm md:text-base">
+            {plant.plant_information.common_names
+              .filter(n => n && n !== "No common names available")
+              .join(", ") || "No common names available"}
+          </p>
         </motion.div>
       )}
 
@@ -301,14 +328,16 @@ export default function DetailedView() {
       )}
 
       {/* Care Information */}
-      {(plant.plant_information?.edible_parts || plant.plant_information?.watering || plant.plant_information?.propagation_methods) && (
+      {((plant.plant_information?.edible_parts && plant.plant_information.edible_parts.length > 0) || 
+        plant.plant_information?.watering || 
+        (plant.plant_information?.propagation_methods && plant.plant_information.propagation_methods.length > 0)) && (
         <motion.div className="max-w-4xl mx-auto mb-6" initial="hidden" animate="visible" variants={textVariant}>
           <h2 className="text-2xl md:text-3xl font-semibold mb-3 text-center md:text-left">🌿 Care Information</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-left text-sm md:text-base">
             {plant.plant_information.edible_parts && plant.plant_information.edible_parts.length > 0 && (
               <p><strong>Edible Parts:</strong> {plant.plant_information.edible_parts.join(", ")}</p>
             )}
-            {plant.plant_information.watering && (
+            {plant.plant_information.watering && plant.plant_information.watering.min !== undefined && plant.plant_information.watering.max !== undefined && (
               <p><strong>Watering Level:</strong> {plant.plant_information.watering.min} - {plant.plant_information.watering.max}</p>
             )}
             {plant.plant_information.propagation_methods && plant.plant_information.propagation_methods.length > 0 && (
@@ -348,7 +377,11 @@ export default function DetailedView() {
           </p>
 
           {health.question && (
-            <div className="mb-6 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg">
+            <div className={`mb-6 p-4 rounded-lg border transition-colors duration-300 ${
+              darkMode 
+                ? 'bg-[var(--navbar)]/5 border-[var(--navbar)]/20' 
+                : 'bg-[var(--navbar)]/5 border-[var(--navbar)]/20'
+            }`}>
               <p className="font-medium mb-3">{health.question.text}</p>
               <div className="flex gap-3 mb-2">
                 <button
@@ -357,7 +390,7 @@ export default function DetailedView() {
                     selectedAnswer === "yes" ? "bg-[var(--primary)]" : "bg-[var(--primary-hover)] hover:bg-[var(--primary)]"
                   }`}
                 >
-                  {health.question.options.yes.translation}
+                  {health.question.options?.yes?.translation || "Yes"}
                 </button>
                 <button
                   onClick={() => setSelectedAnswer("no")}
@@ -365,11 +398,11 @@ export default function DetailedView() {
                     selectedAnswer === "no" ? "bg-[var(--primary)]" : "bg-[var(--primary-hover)] hover:bg-[var(--primary)]"
                   }`}
                 >
-                  {health.question.options.no.translation}
+                  {health.question.options?.no?.translation || "No"}
                 </button>
               </div>
               {selectedAnswer && (
-                <p className="text-sm italic text-gray-700 dark:text-gray-300 mt-2">
+                <p className={`text-sm italic mt-2 ${darkMode ? 'opacity-80' : 'opacity-70'}`}>
                   {selectedAnswer === "yes"
                     ? "Based on your answer, water excess or uneven watering is more likely."
                     : "Based on your answer, nutrient deficiency is more likely."}
@@ -386,22 +419,26 @@ export default function DetailedView() {
                   .filter((d) => !d.redundant) // Filter out redundant suggestions
                   .slice(0, 6) // Show top 6 suggestions
                   .map((d, idx) => (
-                    <div key={d.id ?? idx} className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800 dark:border-gray-700">
+                    <div key={d.id ?? idx} className={`rounded-lg p-4 border transition-colors duration-300 ${
+                      darkMode 
+                        ? 'bg-[var(--navbar)]/5 border-[var(--navbar)]/20' 
+                        : 'bg-[var(--navbar)]/5 border-[var(--navbar)]/20'
+                    }`}>
                       <p className="font-semibold text-lg mb-2">
                         {d.name}{" "}
-                        <span className="text-sm font-normal text-gray-600 dark:text-gray-400">
+                        <span className={`text-sm font-normal ${darkMode ? 'opacity-70' : 'opacity-60'}`}>
                           ({Math.round(d.probability * 100)}%)
                         </span>
                       </p>
                       
                       {d.details?.description && (
-                        <p className="text-sm text-gray-700 dark:text-gray-300 mb-3 leading-relaxed">
+                        <p className={`text-sm mb-3 leading-relaxed ${darkMode ? 'opacity-90' : 'opacity-80'}`}>
                           {d.details.description}
                         </p>
                       )}
                       
                       {d.details?.common_names && d.details.common_names.length > 0 && (
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                        <p className={`text-sm mb-2 ${darkMode ? 'opacity-70' : 'opacity-60'}`}>
                           <strong>Also known as:</strong> {d.details.common_names.join(", ")}
                         </p>
                       )}
@@ -419,14 +456,15 @@ export default function DetailedView() {
                       
                       {d.similar_images && d.similar_images.length > 0 && (
                         <div className="mt-3">
-                          <p className="text-xs font-semibold mb-2 text-gray-600 dark:text-gray-400">Similar Images:</p>
+                          <p className={`text-xs font-semibold mb-2 ${darkMode ? 'opacity-70' : 'opacity-60'}`}>Similar Images:</p>
                           <div className="flex gap-2 overflow-x-auto pb-2">
-                            {d.similar_images.slice(0, 3).map((img) => (
+                            {d.similar_images.slice(0, 3).map((img, imgIdx) => (
                               <img
-                                key={img.id}
+                                key={img.id || imgIdx}
                                 src={img.url_small || img.url}
-                                alt={d.name}
-                                className="w-20 h-20 md:w-24 md:h-24 object-cover rounded border flex-shrink-0"
+                                alt={`${d.name} example ${imgIdx + 1}`}
+                                className="w-20 h-20 md:w-24 md:h-24 object-cover rounded border border-[var(--navbar)]/20 flex-shrink-0"
+                                loading="lazy"
                               />
                             ))}
                           </div>

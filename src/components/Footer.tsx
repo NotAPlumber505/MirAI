@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useTheme } from "../contexts/ThemeContext";
+import { frame } from "framer-motion";
 
 export default function Footer() {
   const { darkMode } = useTheme();
@@ -29,12 +30,14 @@ export default function Footer() {
       </div>
 
       {/* Right: Meet the Team */}
-      <Link
-        to="/team"
-        className="ml-auto text-xl font-normal font-['Poppins'] cursor-pointer hover:underline"
-      >
-        Meet the Team
-      </Link>
+      <div className="ml-auto flex items-center gap-6">
+        <Link
+          to="/team"
+          className="text-xl font-normal font-['Poppins'] cursor-pointer hover:underline"
+        >
+          Meet the Team
+        </Link>
+      </div>
     </footer>
   );
 }

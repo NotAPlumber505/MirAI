@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { useTheme } from "../contexts/ThemeContext";
+import { Github, Linkedin, Mail } from "lucide-react";
 
 // ✅ Import local images from src/assets
 import mario from "../assets/mario.png";
@@ -10,6 +11,10 @@ interface ExtendedTeamMember extends TeamMember {
   bullets: string[];
   orderMobile: number; // order for mobile column layout
   orderDesktop: number; // order for desktop row layout
+  github?: string;
+  linkedin?: string;
+  email?: string;
+  devpost?: string;
 }
 
 interface TeamMember {
@@ -30,6 +35,10 @@ const team: ExtendedTeamMember[] = [
     ],
     orderMobile: 2,
     orderDesktop: 1,
+    github: "https://github.com/N1xed",
+    linkedin: "https://www.linkedin.com/in/marcos-arrazola-51954227b/",
+    email: "lightningmark1@gmail.com",
+    devpost: "https://devpost.com/lightningmark1",
   },
   {
     name: "Mario Casas",
@@ -41,6 +50,10 @@ const team: ExtendedTeamMember[] = [
     ],
     orderMobile: 1,
     orderDesktop: 2, // Center position on desktop row
+    github: "https://github.com/NotAPlumber505",
+    linkedin: "https://www.linkedin.com/in/mario-casas-08491b21b/",
+    email: "MCasas548@gmail.com",
+    devpost: "https://devpost.com/mcasas548",
   },
   {
     name: "Cristian Mantilla",
@@ -53,6 +66,10 @@ const team: ExtendedTeamMember[] = [
     ],
     orderMobile: 3,
     orderDesktop: 3,
+    github: "https://github.com/sonicrush",
+    linkedin: "https://www.linkedin.com/in/cristian-mantilla-8560a3293/",
+    email: "crisman2005@gmail.com",
+    devpost: "https://devpost.com/sonicrush",
   },
 ];
 
@@ -83,6 +100,23 @@ export default function MeetTheTeam() {
         darkMode ? "bg-[var(--background)]" : "bg-[var(--background)]"
       }`}
     >
+      {/* Mobile GitHub Logo - shows only on mobile */}
+      <div className="flex justify-center mt-12 mb-8 md:hidden">
+        <a
+          href="https://github.com/NotAPlumber505/MirAI"
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`p-4 rounded-full transition-all duration-300 cursor-pointer shadow-md ${
+            darkMode
+              ? "bg-[var(--navbar)] text-[var(--primary)] hover:bg-[var(--primary)] hover:text-white hover:scale-110 active:scale-95"
+              : "bg-white text-[var(--navbar)] hover:bg-[var(--primary)] hover:text-white hover:scale-110 active:scale-95 border-2 border-[var(--primary)]/30"
+          }`}
+          aria-label="View MirAI on GitHub"
+        >
+          <Github className="w-8 h-8" />
+        </a>
+      </div>
+
       {/* Page Header */}
       <motion.h1
         className={`text-5xl mt-20 md:text-6xl font-bold text-center mb-16 font-[var(--font-logo)] ${
@@ -143,6 +177,68 @@ export default function MeetTheTeam() {
                 <li key={b} className="leading-snug">{b}</li>
               ))}
             </ul>
+
+            {/* Social Links */}
+            <div className="flex items-center justify-center gap-4 mt-6">
+              {member.github && (
+                <a
+                  href={member.github}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`p-3 rounded-full transition-all duration-300 cursor-pointer shadow-sm ${
+                    darkMode
+                      ? "bg-[var(--navbar)] text-[var(--primary)] hover:bg-[var(--primary)] hover:text-white hover:scale-110 active:scale-95"
+                      : "bg-white text-[var(--navbar)] hover:bg-[var(--primary)] hover:text-white hover:scale-110 active:scale-95 border border-[var(--primary)]/30"
+                  }`}
+                  aria-label={`${member.name}'s GitHub`}
+                >
+                  <Github className="w-6 h-6" />
+                </a>
+              )}
+              {member.linkedin && (
+                <a
+                  href={member.linkedin}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`p-3 rounded-full transition-all duration-300 cursor-pointer shadow-sm ${
+                    darkMode
+                      ? "bg-[var(--navbar)] text-[var(--primary)] hover:bg-[var(--primary)] hover:text-white hover:scale-110 active:scale-95"
+                      : "bg-white text-[var(--navbar)] hover:bg-[var(--primary)] hover:text-white hover:scale-110 active:scale-95 border border-[var(--primary)]/30"
+                  }`}
+                  aria-label={`${member.name}'s LinkedIn`}
+                >
+                  <Linkedin className="w-6 h-6" />
+                </a>
+              )}
+              {member.email && (
+                <a
+                  href={`mailto:${member.email}`}
+                  className={`p-3 rounded-full transition-all duration-300 cursor-pointer shadow-sm ${
+                    darkMode
+                      ? "bg-[var(--navbar)] text-[var(--primary)] hover:bg-[var(--primary)] hover:text-white hover:scale-110 active:scale-95"
+                      : "bg-white text-[var(--navbar)] hover:bg-[var(--primary)] hover:text-white hover:scale-110 active:scale-95 border border-[var(--primary)]/30"
+                  }`}
+                  aria-label={`Email ${member.name}`}
+                >
+                  <Mail className="w-6 h-6" />
+                </a>
+              )}
+              {member.devpost && (
+                <a
+                  href={member.devpost}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`px-4 py-2 rounded-full text-sm font-semibold transition-all duration-300 cursor-pointer shadow-sm ${
+                    darkMode
+                      ? "bg-[var(--navbar)] text-[var(--primary)] hover:bg-[var(--primary)] hover:text-white hover:scale-110 active:scale-95"
+                      : "bg-white text-[var(--navbar)] hover:bg-[var(--primary)] hover:text-white hover:scale-110 active:scale-95 border border-[var(--primary)]/30"
+                  }`}
+                  aria-label={`${member.name}'s Devpost`}
+                >
+                  Devpost
+                </a>
+              )}
+            </div>
           </motion.div>
         ))}
       </motion.div>

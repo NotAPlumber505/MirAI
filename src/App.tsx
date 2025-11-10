@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import NavbarLayout from "./pages/NavbarLayout";
 import Home from "./pages/Home";
 import Profile from "./pages/Profile";
@@ -11,21 +11,6 @@ import Team from "./pages/Team";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import { supabase } from "./supabaseClient";
-
-// Wrapper to handle rendering ResetPassword even if logged in
-function ResetPasswordWrapper({ isLoggedIn }: { isLoggedIn: boolean }) {
-  const location = useLocation();
-  const searchParams = new URLSearchParams(location.search);
-  const token = searchParams.get("token");
-  const hasHashToken = typeof window !== 'undefined' && (window.location.hash?.includes('access_token=') || location.hash?.includes('access_token='));
-  const hasRecoveryFlag = searchParams.get('recovery') === '1' || !!searchParams.get('email');
-
-  // If a token, hash access_token, or recovery flag exists, always render ResetPassword
-  if (token || hasHashToken || hasRecoveryFlag) return <ResetPassword />;
-
-  // Otherwise, only render if not logged in
-  return !isLoggedIn ? <ResetPassword /> : <Navigate to="/" replace />;
-}
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
@@ -52,6 +37,10 @@ export default function App() {
         <Route element={<NavbarLayout isLoggedIn={isLoggedIn} />}>
           <Route path="/" element={isLoggedIn ? <Home /> : <Navigate to="/login" replace />} />
           <Route
+            path="/home"
+            element={isLoggedIn ? <Home /> : <Navigate to="/login" replace />}
+          />
+          <Route
             path="/scan"
             element={isLoggedIn ? <Scan supabase={supabase} /> : <Navigate to="/login" replace />}
           />
@@ -70,16 +59,16 @@ export default function App() {
           <Route path="/team" element={<Team />} />
         </Route>
 
-        {/* Auth routes */}
+        {/* Auth routes - standalone without navbar */}
         <Route
           path="/login"
-          element={!isLoggedIn ? <Login supabase={supabase} /> : <Navigate to="/" replace />}
+          element={<Login supabase={supabase} />}
         />
         <Route
           path="/forgot-password"
-          element={!isLoggedIn ? <ForgotPassword supabase={supabase} /> : <Navigate to="/" replace />}
+          element={<ForgotPassword supabase={supabase} />}
         />
-        <Route path="/reset-password" element={<ResetPasswordWrapper isLoggedIn={!!isLoggedIn} />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
       </Routes>
     </Router>
   );

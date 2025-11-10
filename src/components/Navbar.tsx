@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useTheme } from "../contexts/ThemeContext";
+import { Github } from "lucide-react";
 import MirAI_Dark_Logo from "../assets/MirAI_Dark_Logo.png";
 import MirAI_light_Logo from "../assets/MirAI_light_Logo.png";
 
@@ -63,16 +64,31 @@ export default function Navbar(props:any) {
         </Link>
       </div>
 
-      <button
-        onClick={toggleDarkMode}
-        className={`px-4 py-2 rounded font-medium transition cursor-pointer
-                    ${darkMode
-                      ? "bg-[var(--navbar)] text-[var(--primary)] hover:bg-[var(--primary-hover)]"
-                      : "bg-white text-[var(--navbar)] hover:bg-[var(--primary-hover)]"
-                    }`}
-      >
-        {darkMode ? "☀️" : "🌙"}
-      </button>
+      <div className="flex items-center gap-3">
+        <a
+          href="https://github.com/NotAPlumber505/MirAI"
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`p-2.5 rounded-full transition-all duration-300 cursor-pointer ${
+            darkMode
+              ? "bg-[var(--navbar)] text-[var(--primary)] hover:bg-[var(--primary-hover)] hover:text-[var(--background)] hover:scale-110 active:scale-95"
+              : "bg-white text-[var(--primary)] hover:bg-[var(--navbar)] hover:text-white hover:scale-110 active:scale-95"
+          }`}
+          aria-label="View MirAI on GitHub"
+        >
+          <Github className="w-5 h-5" />
+        </a>
+        <button
+          onClick={toggleDarkMode}
+          className={`px-4 py-2 rounded font-medium transition cursor-pointer
+                      ${darkMode
+                        ? "bg-[var(--navbar)] text-[var(--primary)] hover:bg-[var(--primary-hover)]"
+                        : "bg-white text-[var(--navbar)] hover:bg-[var(--primary-hover)]"
+                      }`}
+        >
+          {darkMode ? "☀️" : "🌙"}
+        </button>
+      </div>
     </nav>
   );
 }

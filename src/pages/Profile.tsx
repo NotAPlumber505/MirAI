@@ -123,10 +123,18 @@ export default function Profile({ supabase, isLoggedIn }: any) {
           // Process plants to add avatar images
           const processedPlants = (plantsData || []).map((plant: any) => {
             const avatarType = getAvatarType(plant);
+            const avatarImage = getAvatarImage(avatarType);
+            
+            // Debug logging to verify avatar assignment
+            console.log(`Plant: ${plant.plant_name}`);
+            console.log(`  Family: ${plant.plant_information?.taxonomy?.family}`);
+            console.log(`  Avatar Type: ${avatarType}`);
+            console.log(`  Avatar Image:`, avatarImage);
+            
             return {
               ...plant,
               avatarType,
-              avatarImage: getAvatarImage(avatarType)
+              avatarImage
             };
           });
           setPlants(processedPlants);

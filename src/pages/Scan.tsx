@@ -112,6 +112,43 @@ export default function Scan(props: any) {
   // Call the backend proxy (server) instead of calling Plant.id directly from the client.
   // This keeps the Plant.id API key on the server and avoids exposing it in client bundles.
   const identifyPlant = async (base64Image: string): Promise<any> => {
+    // Helper to get the correct API base URL
+    const getApiUrl = (endpoint: string): string => {
+      const devBase = ((import.meta as any).env?.VITE_API_BASE_URL) || '';
+      if (devBase) {
+        return `${devBase.replace(/\/$/, '')}${endpoint}`;
+      }
+      return `/api${endpoint}`;
+    };
+
+    // Helper to fetch with fallback
+    const fetchWithFallback = async (endpoint: string, options: RequestInit): Promise<Response | null> => {
+      const apiUrl = getApiUrl(endpoint);
+      
+      try {
+        const response = await fetch(apiUrl, options);
+        if (response.ok || response.status !== 404) {
+          return response;
+        }
+      } catch (e) {
+        console.warn(`Primary request to ${apiUrl} failed:`, e);
+      }
+
+      // Fallback to localhost if we're in dev and the proxy failed
+      if (!((import.meta as any).env?.VITE_API_BASE_URL)) {
+        const fallbackUrl = `http://localhost:5000${endpoint}`;
+        console.warn(`Trying fallback: ${fallbackUrl}`);
+        try {
+          return await fetch(fallbackUrl, options);
+        } catch (e) {
+          console.error(`Fallback request to ${fallbackUrl} failed:`, e);
+          return null;
+        }
+      }
+      
+      return null;
+    };
+
     // First, get plant identification
     // Only send parameters that Plant.id accepts as "modifiers" in the POST body
     const identifyBody = {
@@ -120,34 +157,11 @@ export default function Scan(props: any) {
       similar_images: true
     };
 
-    // Allow an explicit dev backend override via Vite env var VITE_API_BASE_URL.
-    // If set, we'll call the backend directly (useful when the Vite proxy isn't forwarding POSTs).
-      const devBase = ((import.meta as any).env?.VITE_API_BASE_URL) || '';
-    const identifyPath = devBase ? `${devBase.replace(/\/$/, '')}/identify` : '/api/identify';
-
-    // Try proxy/base path first. If that returns 404 and we didn't already target the backend directly,
-    // fall back to the backend at http://localhost:5000/identify for local testing.
-    let identifyResp = await fetch(identifyPath, {
+    const identifyResp = await fetchWithFallback('/identify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(identifyBody),
-    }).catch((e) => {
-      console.warn('Proxy request to /api/identify failed:', e);
-      return null;
     });
-
-    if (!devBase && identifyResp && identifyResp.status === 404) {
-      // Vite dev server didn't proxy the request. Try the backend directly.
-      console.warn('/api/identify returned 404 from dev server — trying backend at http://localhost:5000/identify');
-      identifyResp = await fetch('http://localhost:5000/identify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(identifyBody),
-      }).catch((e) => {
-        console.error('Direct backend request failed:', e);
-        return null;
-      });
-    }
 
     if (!identifyResp || !identifyResp.ok) {
       const err = identifyResp ? await identifyResp.json().catch(() => ({})) : {};
@@ -155,7 +169,34 @@ export default function Scan(props: any) {
     }
 
     const identification = await identifyResp.json();
-    console.log('Identification (proxied or direct):', identification);
+    console.log('Initial identification result:', identification);
+    
+    // The POST /identification response includes an access_token we can use to get full details
+    const accessToken = identification.access_token;
+    if (accessToken) {
+      console.log('Fetching full identification details with access_token:', accessToken);
+      try {
+        // GET the full identification with all details using the access_token
+        const detailsResp = await fetchWithFallback(
+          `/identification-details/${accessToken}`,
+          { method: 'GET' }
+        );
+        
+        if (detailsResp?.ok) {
+          const fullIdentification = await detailsResp.json();
+          console.log('Full identification with details:', fullIdentification);
+          console.log('Taxonomy from full identification:', fullIdentification.result?.classification?.suggestions?.[0]?.details?.taxonomy);
+          // Replace the basic identification with the full one that has taxonomy
+          identification.result = fullIdentification.result;
+        }
+      } catch (err) {
+        console.warn('Failed to fetch full identification details (will use basic identification):', err);
+      }
+    }
+    
+    console.log('Final identification suggestions[0]:', identification.result?.classification?.suggestions?.[0]);
+    console.log('Final identification details:', identification.result?.classification?.suggestions?.[0]?.details);
+    console.log('Final identification taxonomy:', identification.result?.classification?.suggestions?.[0]?.details?.taxonomy);
 
     // Get detailed plant information using the proper flow:
     // 1. Search for the plant by name to get access_token
@@ -168,17 +209,14 @@ export default function Scan(props: any) {
       console.log('Searching for plant details:', plantName);
       try {
         // Step 1: Search for the plant by name
-        const searchResp = await fetch(`/api/plant-search?q=${encodeURIComponent(plantName)}&limit=1&language=en`).catch(() => null);
+        const searchResp = await fetchWithFallback(
+          `/plant-search?q=${encodeURIComponent(plantName)}&limit=1&language=en`,
+          { method: 'GET' }
+        );
         
         let searchData = null;
         if (searchResp?.ok) {
           searchData = await searchResp.json();
-        } else if (!devBase) {
-          // Fallback to direct backend
-          const directSearchResp = await fetch(`http://localhost:5000/api/plant-search?q=${encodeURIComponent(plantName)}&limit=1&language=en`).catch(() => null);
-          if (directSearchResp?.ok) {
-            searchData = await directSearchResp.json();
-          }
         }
         
         // Step 2: If we found a match, get detailed info using the access_token
@@ -186,23 +224,23 @@ export default function Scan(props: any) {
           const accessToken = searchData.entities[0].access_token;
           console.log('Found plant in knowledge base, access_token:', accessToken);
           
-          const detailsResp = await fetch(`/api/plant-details/${accessToken}?language=en`).catch(() => null);
+          const detailsResp = await fetchWithFallback(
+            `/plant-details/${accessToken}?language=en`,
+            { method: 'GET' }
+          );
           
-          if (!detailsResp && !devBase) {
-            // Fallback to direct backend
-            const directResp = await fetch(`http://localhost:5000/api/plant-details/${accessToken}?language=en`).catch(() => null);
-            if (directResp?.ok) {
-              plantDetails = await directResp.json();
-            }
-          } else if (detailsResp?.ok) {
+          if (detailsResp?.ok) {
             plantDetails = await detailsResp.json();
-          }
-          
-          if (plantDetails) {
             console.log('Plant details fetched successfully:', plantDetails);
-            // Merge detailed info into the identification result
+            // Merge detailed info into the identification result (preserve existing taxonomy)
             if (identification.result?.classification?.suggestions?.[0]) {
-              identification.result.classification.suggestions[0].details = plantDetails;
+              const existingDetails = identification.result.classification.suggestions[0].details;
+              identification.result.classification.suggestions[0].details = {
+                ...existingDetails, // Keep taxonomy, common_names, description, url from identification
+                ...plantDetails,    // Add edible_parts, watering, propagation_methods from plant-details
+                // Ensure taxonomy from identification is not overwritten
+                taxonomy: existingDetails?.taxonomy || plantDetails?.taxonomy
+              };
             }
           }
         } else {
@@ -217,32 +255,17 @@ export default function Scan(props: any) {
     // Health assessment uses the same image - it doesn't need plant_details
     const healthBody = {
       images: [base64Image],
-      health: "all" // Request all health information
+      // Optional: health: "only" tells the API to focus only on health issues (not identification)
+      // We can omit this since we already have identification data
     };
 
     console.log('Requesting health assessment...');
 
-    // Request health assessment; try proxy first, then backend directly if needed
-    let healthResp = await fetch('/api/health', {
+    const healthResp = await fetchWithFallback('/health', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(healthBody),
-    }).catch((e) => {
-      console.warn('Proxy request to /api/health failed:', e);
-      return null;
     });
-
-    if (healthResp && healthResp.status === 404) {
-      console.warn('/api/health returned 404 from dev server — trying backend at http://localhost:5000/health');
-      healthResp = await fetch('http://localhost:5000/health', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(healthBody),
-      }).catch((e) => {
-        console.error('Direct backend health request failed:', e);
-        return null;
-      });
-    }
 
     if (!healthResp || !healthResp.ok) {
       console.warn('Health assessment failed or unavailable, continuing with identification only');
@@ -492,13 +515,13 @@ export default function Scan(props: any) {
 
                 {/* Health Assessment Results */}
                 {plantData.result?.disease?.suggestions?.length ? (
-                  <div className="mt-6 pt-4 border-t border-gray-300 dark:border-gray-600">
+                  <div className={`mt-6 pt-4 border-t ${darkMode ? 'border-[var(--navbar)]/20' : 'border-[var(--navbar)]/30'}`}>
                     <p className="font-semibold text-[var(--primary)] text-xl mb-3">Health Assessment</p>
                     
                     {/* Overall Health Status */}
                     <p className="mb-4">
                       <span className="font-semibold">Status:</span>{" "}
-                      <span className={plantData.result.is_healthy?.binary ? "text-[var(--success)]" : "text-[var(--secondary)]"}>
+                      <span className={plantData.result.is_healthy?.binary ? "text-[var(--success)]" : "text-[var(--danger)]"}>
                         {plantData.result.is_healthy?.binary ? "Healthy" : "Needs Attention"}
                       </span>
                     </p>
@@ -509,22 +532,26 @@ export default function Scan(props: any) {
                         .filter((disease: any) => !disease.redundant) // Filter out redundant suggestions
                         .slice(0, 3) // Show top 3 suggestions
                         .map((disease: any, idx: number) => (
-                          <div key={idx} className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
+                          <div key={idx} className={`p-3 rounded-lg border ${
+                            darkMode 
+                              ? 'bg-[var(--navbar)]/5 border-[var(--navbar)]/20' 
+                              : 'bg-[var(--navbar)]/5 border-[var(--navbar)]/20'
+                          }`}>
                             <p className="font-semibold">
                               {disease.name}{" "}
-                              <span className="text-sm font-normal text-gray-600 dark:text-gray-400">
+                              <span className={`text-sm font-normal ${darkMode ? 'opacity-70' : 'opacity-60'}`}>
                                 ({(disease.probability * 100).toFixed(1)}% probability)
                               </span>
                             </p>
                             
                             {disease.details?.description && (
-                              <p className="text-sm mt-2 text-gray-700 dark:text-gray-300">
+                              <p className={`text-sm mt-2 ${darkMode ? 'opacity-90' : 'opacity-80'}`}>
                                 {disease.details.description}
                               </p>
                             )}
                             
                             {disease.details?.common_names && Array.isArray(disease.details.common_names) && disease.details.common_names.length > 0 && (
-                              <p className="text-sm mt-1 text-gray-600 dark:text-gray-400">
+                              <p className={`text-sm mt-1 ${darkMode ? 'opacity-70' : 'opacity-60'}`}>
                                 Also known as: {disease.details.common_names.join(", ")}
                               </p>
                             )}
@@ -544,7 +571,7 @@ export default function Scan(props: any) {
                     </div>
                   </div>
                 ) : (
-                  <div className="mt-6 pt-4 border-t border-gray-300 dark:border-gray-600">
+                  <div className={`mt-6 pt-4 border-t ${darkMode ? 'border-[var(--navbar)]/20' : 'border-[var(--navbar)]/30'}`}>
                     <p className="font-semibold text-[var(--primary)] text-xl mb-3">Health Assessment</p>
                     <div className="bg-[var(--success)]/10 border-2 border-[var(--success)] rounded-lg p-4">
                       <p className="text-[var(--success)] font-semibold">
@@ -661,9 +688,13 @@ export default function Scan(props: any) {
 
     async function insertIntoUsersPlantsTable(filePath: string, plantData: PlantIdResponse) {
       // Get the best match from suggestions
-      console.log(plantData)
+      console.log('===== INSERTING PLANT DATA =====');
+      console.log('Full plantData:', plantData);
       const bestMatch = plantData.result.classification.suggestions[0];
+      console.log('Best match:', bestMatch);
       const details = bestMatch.details; // May contain detailed info from plant-details endpoint
+      console.log('Details object:', details);
+      console.log('Details.taxonomy:', details?.taxonomy);
       const health = plantData.result.disease;
 
       // include user_id and format date to YYYY-MM-DD (matches your existing inserts)
