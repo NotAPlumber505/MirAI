@@ -171,7 +171,7 @@ export default function DetailedView() {
             const { data: imageData, error: imageError } = await supabase
               .storage
               .from("plant_images")
-              .createSignedUrl(data.plant_path, 60);
+              .createSignedUrl(data.plant_path, 3600); // 1 hour expiry
 
             if (imageError) {
               console.error("Error getting image URL:", imageError);

@@ -155,10 +155,12 @@ export default function MyGarden(props: any) {
               const { data: imageData, error: imageError } = await supabase
                 .storage
                 .from("plant_images")
-                .createSignedUrl(plant.plant_path, 60);
+                .createSignedUrl(plant.plant_path, 3600); // 1 hour expiry
 
               if (!imageError && imageData?.signedUrl) {
                 plant_image = imageData.signedUrl;
+              } else {
+                console.error("Error getting signed URL:", imageError);
               }
             }
           } catch (imgErr) {

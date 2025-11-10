@@ -42,7 +42,7 @@ const team: ExtendedTeamMember[] = [
   },
   {
     name: "Mario Casas",
-    role: "Project Lead",
+    role: "Project Manager",
     imageSrc: mario,
     bullets: [
       "Connected frontend to backend",
@@ -106,10 +106,10 @@ export default function MeetTheTeam() {
           href="https://github.com/NotAPlumber505/MirAI"
           target="_blank"
           rel="noopener noreferrer"
-          className={`p-4 rounded-full transition-all duration-300 cursor-pointer shadow-md ${
+          className={`p-4 rounded-full transition-all duration-300 cursor-pointer shadow-md border-2 ${
             darkMode
-              ? "bg-[var(--navbar)] text-[var(--primary)] hover:bg-[var(--primary)] hover:text-white hover:scale-110 active:scale-95"
-              : "bg-white text-[var(--navbar)] hover:bg-[var(--primary)] hover:text-white hover:scale-110 active:scale-95 border-2 border-[var(--primary)]/30"
+              ? "bg-[var(--navbar)] text-[var(--primary)] border-transparent hover:bg-[var(--primary)] hover:text-white hover:scale-110 active:scale-95"
+              : "bg-white text-[var(--navbar)] border-[var(--primary)]/30 hover:bg-[var(--primary)] hover:text-white hover:scale-110 active:scale-95"
           }`}
           aria-label="View MirAI on GitHub"
         >
@@ -172,9 +172,9 @@ export default function MeetTheTeam() {
             </p>
 
             {/* Bullet contributions */}
-            <ul className={`text-base md:text-lg space-y-2 text-left list-disc list-inside ${darkMode ? 'text-[var(--navbar)]' : 'text-[var(--navbar)]'} max-w-[95%]`}> 
+            <ul className={`text-base md:text-lg space-y-2 text-left list-disc list-outside ml-5 ${darkMode ? 'text-[var(--navbar)]' : 'text-[var(--navbar)]'} max-w-[95%]`}> 
               {member.bullets.map((b) => (
-                <li key={b} className="leading-snug">{b}</li>
+                <li key={b} className="leading-snug pl-2">{b}</li>
               ))}
             </ul>
 
@@ -185,10 +185,10 @@ export default function MeetTheTeam() {
                   href={member.github}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`p-3 rounded-full transition-all duration-300 cursor-pointer shadow-sm ${
+                  className={`p-3 rounded-full transition-all duration-300 cursor-pointer shadow-sm border ${
                     darkMode
-                      ? "bg-[var(--navbar)] text-[var(--primary)] hover:bg-[var(--primary)] hover:text-white hover:scale-110 active:scale-95"
-                      : "bg-white text-[var(--navbar)] hover:bg-[var(--primary)] hover:text-white hover:scale-110 active:scale-95 border border-[var(--primary)]/30"
+                      ? "bg-[var(--navbar)] text-[var(--primary)] border-transparent hover:bg-[var(--primary)] hover:text-white hover:scale-110 active:scale-95"
+                      : "bg-white text-[var(--navbar)] border-[var(--primary)]/30 hover:bg-[var(--primary)] hover:text-white hover:scale-110 active:scale-95"
                   }`}
                   aria-label={`${member.name}'s GitHub`}
                 >
@@ -200,10 +200,10 @@ export default function MeetTheTeam() {
                   href={member.linkedin}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`p-3 rounded-full transition-all duration-300 cursor-pointer shadow-sm ${
+                  className={`p-3 rounded-full transition-all duration-300 cursor-pointer shadow-sm border ${
                     darkMode
-                      ? "bg-[var(--navbar)] text-[var(--primary)] hover:bg-[var(--primary)] hover:text-white hover:scale-110 active:scale-95"
-                      : "bg-white text-[var(--navbar)] hover:bg-[var(--primary)] hover:text-white hover:scale-110 active:scale-95 border border-[var(--primary)]/30"
+                      ? "bg-[var(--navbar)] text-[var(--primary)] border-transparent hover:bg-[var(--primary)] hover:text-white hover:scale-110 active:scale-95"
+                      : "bg-white text-[var(--navbar)] border-[var(--primary)]/30 hover:bg-[var(--primary)] hover:text-white hover:scale-110 active:scale-95"
                   }`}
                   aria-label={`${member.name}'s LinkedIn`}
                 >
@@ -213,10 +213,10 @@ export default function MeetTheTeam() {
               {member.email && (
                 <a
                   href={`mailto:${member.email}`}
-                  className={`p-3 rounded-full transition-all duration-300 cursor-pointer shadow-sm ${
+                  className={`p-3 rounded-full transition-all duration-300 cursor-pointer shadow-sm border ${
                     darkMode
-                      ? "bg-[var(--navbar)] text-[var(--primary)] hover:bg-[var(--primary)] hover:text-white hover:scale-110 active:scale-95"
-                      : "bg-white text-[var(--navbar)] hover:bg-[var(--primary)] hover:text-white hover:scale-110 active:scale-95 border border-[var(--primary)]/30"
+                      ? "bg-[var(--navbar)] text-[var(--primary)] border-transparent hover:bg-[var(--primary)] hover:text-white hover:scale-110 active:scale-95"
+                      : "bg-white text-[var(--navbar)] border-[var(--primary)]/30 hover:bg-[var(--primary)] hover:text-white hover:scale-110 active:scale-95"
                   }`}
                   aria-label={`Email ${member.name}`}
                 >
@@ -228,10 +228,10 @@ export default function MeetTheTeam() {
                   href={member.devpost}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`px-4 py-2 rounded-full text-sm font-semibold transition-all duration-300 cursor-pointer shadow-sm ${
+                  className={`px-4 py-2 rounded-full text-sm font-semibold transition-all duration-300 cursor-pointer shadow-sm border ${
                     darkMode
-                      ? "bg-[var(--navbar)] text-[var(--primary)] hover:bg-[var(--primary)] hover:text-white hover:scale-110 active:scale-95"
-                      : "bg-white text-[var(--navbar)] hover:bg-[var(--primary)] hover:text-white hover:scale-110 active:scale-95 border border-[var(--primary)]/30"
+                      ? "bg-[var(--navbar)] text-[var(--primary)] border-transparent hover:bg-[var(--primary)] hover:text-white hover:scale-110 active:scale-95"
+                      : "bg-white text-[var(--navbar)] border-[var(--primary)]/30 hover:bg-[var(--primary)] hover:text-white hover:scale-110 active:scale-95"
                   }`}
                   aria-label={`${member.name}'s Devpost`}
                 >
@@ -251,27 +251,27 @@ export default function MeetTheTeam() {
         </p>
         <div className="grid md:grid-cols-3 gap-8 text-left">
           <div className="p-6 rounded-xl bg-white/40 dark:bg-white/10 backdrop-blur-sm border border-[var(--primary)]/30 shadow-sm">
-            <h3 className={`text-2xl font-semibold mb-3 ${darkMode ? 'text-[var(--primary)]' : 'text-[var(--primary)]'}`}>Frontend</h3>
-            <ul className={`list-disc list-inside space-y-2 text-base md:text-lg ${darkMode ? 'text-[var(--navbar)]' : 'text-[var(--navbar)]'}`}>
-              <li>Responsive React + TypeScript architecture</li>
-              <li>Dynamic theming & avatar system</li>
-              <li>Accessible navigation & layout</li>
+            <h3 className={`text-2xl text-center font-semibold mb-3 ${darkMode ? 'text-[var(--primary)]' : 'text-[var(--primary)]'}`}>Frontend</h3>
+            <ul className={`list-disc list-outside ml-5 space-y-2 text-base md:text-lg ${darkMode ? 'text-[var(--navbar)]' : 'text-[var(--navbar)]'}`}>
+              <li className="pl-2">Responsive React + TypeScript architecture</li>
+              <li className="pl-2">Dynamic theming & avatar system</li>
+              <li className="pl-2">Accessible navigation & layout</li>
             </ul>
           </div>
           <div className="p-6 rounded-xl bg-white/40 dark:bg-white/10 backdrop-blur-sm border border-[var(--primary)]/30 shadow-sm">
-            <h3 className={`text-2xl font-semibold mb-3 ${darkMode ? 'text-[var(--primary)]' : 'text-[var(--primary)]'}`}>Backend</h3>
-            <ul className={`list-disc list-inside space-y-2 text-base md:text-lg ${darkMode ? 'text-[var(--navbar)]' : 'text-[var(--navbar)]'}`}>
-              <li>Supabase schema & secure auth</li>
-              <li>Plant.id API integration workflow</li>
-              <li>Data enrichment & health metrics</li>
+            <h3 className={`text-2xl text-center font-semibold mb-3 ${darkMode ? 'text-[var(--primary)]' : 'text-[var(--primary)]'}`}>Backend</h3>
+            <ul className={`list-disc list-outside ml-5 space-y-2 text-base md:text-lg ${darkMode ? 'text-[var(--navbar)]' : 'text-[var(--navbar)]'}`}>
+              <li className="pl-2">Supabase schema & secure auth</li>
+              <li className="pl-2">Plant.id API integration workflow</li>
+              <li className="pl-2">Data enrichment & health metrics</li>
             </ul>
           </div>
           <div className="p-6 rounded-xl bg-white/40 dark:bg-white/10 backdrop-blur-sm border border-[var(--primary)]/30 shadow-sm">
-            <h3 className={`text-2xl font-semibold mb-3 ${darkMode ? 'text-[var(--primary)]' : 'text-[var(--primary)]'}`}>Product</h3>
-            <ul className={`list-disc list-inside space-y-2 text-base md:text-lg ${darkMode ? 'text-[var(--navbar)]' : 'text-[var(--navbar)]'}`}>
-              <li>Wireframing & UX iteration</li>
-              <li>Feature scoping & prioritization</li>
-              <li>Continuous feedback integration</li>
+            <h3 className={`text-2xl text-center font-semibold mb-3 ${darkMode ? 'text-[var(--primary)]' : 'text-[var(--primary)]'}`}>Product</h3>
+            <ul className={`list-disc list-outside ml-5 space-y-2 text-base md:text-lg ${darkMode ? 'text-[var(--navbar)]' : 'text-[var(--navbar)]'}`}>
+              <li className="pl-2">Wireframing & UX iteration</li>
+              <li className="pl-2">Feature scoping & prioritization</li>
+              <li className="pl-2">Continuous feedback integration</li>
             </ul>
           </div>
         </div>

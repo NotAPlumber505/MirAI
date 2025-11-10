@@ -56,40 +56,39 @@ export default function MobileNavbar() {
       <nav
         className={`${bgColor} ${textColor} fixed bottom-0 left-0 w-full h-24 flex justify-around items-center font-[var(--font-sans)] shadow-lg z-40 transition-colors duration-500 md:hidden`}
       >
-        {/* Single logo instance for mobile */}
-        <Link to="/" className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 group">
-          <div className="w-12 h-12 rounded-full overflow-hidden ring-2 ring-[var(--primary)]/40 shadow-sm transition-transform duration-300 group-hover:scale-110">
+        {/* Logo with text below */}
+        <Link to="/" className="flex flex-col items-center group">
+          <div className="w-10 h-10 xs:w-12 xs:h-12 rounded-full overflow-hidden ring-2 ring-[var(--primary)]/40 shadow-sm transition-transform duration-300 group-hover:scale-110">
             <img
               src={darkMode ? MirAI_Dark_Logo : MirAI_light_Logo}
               alt="MirAI Logo"
               className="w-full h-full rounded-full aspect-square object-cover"
             />
           </div>
-          <span className="text-lg font-bold font-[var(--font-logo)] group-hover:scale-105 transition-transform">
+          <span className="text-xs xs:text-sm font-bold font-[var(--font-logo)] mt-1 group-hover:scale-105 transition-transform">
             MirAI
           </span>
         </Link>
-        <div className="flex w-full justify-center gap-10 pl-24 pr-4">
-        <Link to="/" className="flex flex-col items-center">
-          <Home className={iconSize} />
-          <span className="text-xs font-bold mt-1">Home</span>
+
+        <Link to="/" className="flex flex-col items-center group">
+          <Home className="w-5 h-5 xs:w-6 xs:h-6 sm:w-7 sm:h-7 transition-all group-hover:scale-110" />
+          <span className="text-xs xs:text-sm font-bold mt-1">Home</span>
         </Link>
 
-        <Link to="/scan" className="flex flex-col items-center">
-          <Camera className={iconSize} />
-          <span className="text-xs font-bold mt-1">Scan</span>
+        <Link to="/scan" className="flex flex-col items-center group">
+          <Camera className="w-5 h-5 xs:w-6 xs:h-6 sm:w-7 sm:h-7 transition-all group-hover:scale-110" />
+          <span className="text-xs xs:text-sm font-bold mt-1">Scan</span>
         </Link>
 
-        <Link to="/my-garden" className="flex flex-col items-center">
-          <Leaf className={iconSize} />
-          <span className="text-xs font-bold mt-1">My Garden</span>
+        <Link to="/my-garden" className="flex flex-col items-center group">
+          <Leaf className="w-5 h-5 xs:w-6 xs:h-6 sm:w-7 sm:h-7 transition-all group-hover:scale-110" />
+          <span className="text-xs xs:text-sm font-bold mt-1">Garden</span>
         </Link>
 
-        <Link to="/profile" className="flex flex-col items-center">
-          <User className={iconSize} />
-          <span className="text-xs font-bold mt-1">Profile</span>
+        <Link to="/profile" className="flex flex-col items-center group">
+          <User className="w-5 h-5 xs:w-6 xs:h-6 sm:w-7 sm:h-7 transition-all group-hover:scale-110" />
+          <span className="text-xs xs:text-sm font-bold mt-1">Profile</span>
         </Link>
-        </div>
       </nav>
     </>
   );
