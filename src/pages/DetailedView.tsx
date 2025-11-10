@@ -433,7 +433,14 @@ export default function DetailedView() {
                       
                       {d.details?.description && (
                         <p className={`text-sm mb-3 leading-relaxed ${darkMode ? 'opacity-90' : 'opacity-80'}`}>
-                          {d.details.description}
+                          {(() => {
+                            const desc = d.details.description;
+                            if (typeof desc === 'string') return desc;
+                            if (typeof desc === 'object' && desc && 'value' in desc) {
+                              return (desc as { value: string }).value;
+                            }
+                            return '';
+                          })()}
                         </p>
                       )}
                       

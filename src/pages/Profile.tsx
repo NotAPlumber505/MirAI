@@ -399,7 +399,13 @@ export default function Profile({ supabase, isLoggedIn }: any) {
               </p>
               <p>
                 <strong className="text-[var(--primary)]">Description: </strong>
-                {currentPlant?.plant_information?.description || `${currentPlant?.plant_name} - No description available.`}
+                {(() => {
+                  const desc = currentPlant?.plant_information?.description;
+                  if (!desc) return `${currentPlant?.plant_name} - No description available.`;
+                  if (typeof desc === 'string') return desc;
+                  if (typeof desc === 'object' && desc.value) return desc.value;
+                  return `${currentPlant?.plant_name} - No description available.`;
+                })()}
               </p>
               {currentPlant?.plant_information?.url && (
                 <p>
@@ -447,8 +453,17 @@ export default function Profile({ supabase, isLoggedIn }: any) {
                 <>
                   <p>
                     <strong className="text-[var(--primary)]">Cause: </strong>
-                    {currentPlant.health_assesment.disease.suggestions[0].details?.description?.slice(0, 150) || 'Not available'}
-                    {currentPlant.health_assesment.disease.suggestions[0].details?.description?.length > 150 && '...'}
+                    {(() => {
+                      const desc = currentPlant.health_assesment.disease.suggestions[0].details?.description;
+                      if (!desc) return 'Not available';
+                      if (typeof desc === 'string') {
+                        return desc.slice(0, 150) + (desc.length > 150 ? '...' : '');
+                      }
+                      if (typeof desc === 'object' && desc.value) {
+                        return desc.value.slice(0, 150) + (desc.value.length > 150 ? '...' : '');
+                      }
+                      return 'Not available';
+                    })()}
                   </p>
                   <p>
                     <strong className="text-[var(--primary)]">Recommended action: </strong>
