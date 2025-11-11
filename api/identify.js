@@ -5,9 +5,15 @@ module.exports = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const apiKey = process.env.PLANT_ID_API_KEY;
-  if (!apiKey) return res.status(500).json({ error: 'Server missing PLANT_ID_API_KEY' });
+  console.log('API Key present:', !!apiKey, 'Length:', apiKey?.length);
+  
+  if (!apiKey) {
+    console.error('PLANT_ID_API_KEY not found in environment');
+    return res.status(500).json({ error: 'Server missing PLANT_ID_API_KEY' });
+  }
 
   try {
+    console.log('Request body:', JSON.stringify(req.body).substring(0, 200));
     const plantIdUrl = 'https://plant.id/api/v3/identification';
     const fetchRes = await fetch(plantIdUrl, {
       method: 'POST',
@@ -18,10 +24,12 @@ module.exports = async (req, res) => {
       body: JSON.stringify(req.body),
     });
 
+    console.log('Plant.id response status:', fetchRes.status);
     const data = await fetchRes.json();
+    console.log('Plant.id response data:', JSON.stringify(data).substring(0, 200));
     return res.status(fetchRes.ok ? 200 : fetchRes.status).json(data);
   } catch (err) {
     console.error('Error in /api/identify:', err);
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: 'Internal server error', details: err.message });
   }
 };
