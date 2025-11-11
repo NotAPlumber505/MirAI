@@ -1,4 +1,5 @@
 // Vercel serverless function that proxies requests to Plant.id identification endpoint
+// Updated: 2025-11-11
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
