@@ -310,18 +310,16 @@ export default function Profile({ supabase, isLoggedIn }: any) {
             </h1>
 
             {/* Avatar centered between arrows */}
-            <div className="flex items-center justify-center w-full mb-6 gap-6 md:gap-10">
-              {index > 0 ? (
+            <div className="relative flex items-center justify-center w-full mb-6">
+              {index > 0 && (
                 <motion.button
                   whileHover={{ scale: 1.08 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setIndex(index - 1)}
-                  className="w-12 h-12 md:w-14 md:h-14 flex items-center justify-center text-[var(--primary)] text-4xl font-bold border-2 rounded-full transition-transform cursor-pointer"
+                  className="absolute left-0 md:left-8 z-10 w-12 h-12 md:w-14 md:h-14 flex items-center justify-center text-[var(--primary)] text-4xl font-bold border-2 rounded-full transition-transform cursor-pointer bg-[var(--background)] bg-opacity-80"
                 >
                   ←
                 </motion.button>
-              ) : (
-                <div className="w-12 h-12 md:w-14 md:h-14" />
               )}
               <motion.img
                 key={currentPlant?.plant_name}
@@ -332,17 +330,15 @@ export default function Profile({ supabase, isLoggedIn }: any) {
                 animate={{ opacity: 1, scale: 1.05 }}
                 transition={{ duration: 0.4 }}
               />
-              {index < plants.length - 1 ? (
+              {index < plants.length - 1 && (
                 <motion.button
                   whileHover={{ scale: 1.08 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setIndex(index + 1)}
-                  className="w-12 h-12 md:w-14 md:h-14 flex items-center justify-center text-[var(--primary)] text-4xl font-bold border-2 rounded-full transition-transform cursor-pointer"
+                  className="absolute right-0 md:right-8 z-10 w-12 h-12 md:w-14 md:h-14 flex items-center justify-center text-[var(--primary)] text-4xl font-bold border-2 rounded-full transition-transform cursor-pointer bg-[var(--background)] bg-opacity-80"
                 >
                   →
                 </motion.button>
-              ) : (
-                <div className="w-12 h-12 md:w-14 md:h-14" />
               )}
             </div>
 

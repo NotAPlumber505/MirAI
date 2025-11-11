@@ -52,7 +52,7 @@ export default function Home() {
       } text-[var(--primary)]`}
     >
       {/* Navbar comes from NavbarLayout */}
-      <main className="flex-1 pt-32 px-8 md:px-16">
+      <main className="flex-1 pt-45 px-8 md:px-16">
         <motion.div variants={fadeVariant} className="flex flex-col items-center text-center">
           {/* Heading */}
           <motion.h1
