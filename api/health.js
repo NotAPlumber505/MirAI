@@ -1,10 +1,14 @@
-// Vercel-style serverless function that proxies requests to Plant.id health_assessment endpoint
+// Vercel serverless function that proxies requests to Plant.id health_assessment endpoint
 
-module.exports = async (req, res) => {
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+export default async function handler(req, res) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
 
   const apiKey = process.env.PLANT_ID_API_KEY;
-  if (!apiKey) return res.status(500).json({ error: 'Server missing PLANT_ID_API_KEY' });
+  if (!apiKey) {
+    return res.status(500).json({ error: 'Server missing PLANT_ID_API_KEY' });
+  }
 
   try {
     const plantIdUrl = 'https://plant.id/api/v3/health_assessment';
@@ -23,4 +27,4 @@ module.exports = async (req, res) => {
     console.error('Error in /api/health:', err);
     return res.status(500).json({ error: 'Internal server error' });
   }
-};
+}
