@@ -25,7 +25,6 @@ const allowedOrigins = [
   'http://127.0.0.1:5173',           // Alternative localhost
   'http://localhost:5174',           // Alternative Vite port
   'https://mir-ai.vercel.app',       // Production Vercel URL (without trailing slash)
-  'https://mirai.vercel.app',        // Alternative production URL
 ];
 
 app.use(cors({
