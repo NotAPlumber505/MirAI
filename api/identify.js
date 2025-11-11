@@ -8,7 +8,7 @@ module.exports = async (req, res) => {
   if (!apiKey) return res.status(500).json({ error: 'Server missing PLANT_ID_API_KEY' });
 
   try {
-    const plantIdUrl = 'https://api.plant.id/v3/identification';
+    const plantIdUrl = 'https://plant.id/api/v3/identification';
     const fetchRes = await fetch(plantIdUrl, {
       method: 'POST',
       headers: {
